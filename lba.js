@@ -45,7 +45,7 @@ function convert_to_kuroda(grammar){
         grammar.productions.push(new Production([new_variable], [old_symbol]))
     }
 
-    
+    index = 0
 
     for(let i = 0; i < grammar.productions.length; i++){
         n = grammar.productions[i].right.length 
@@ -53,19 +53,21 @@ function convert_to_kuroda(grammar){
         if(grammar.productions[i].left.length == 1 && n > 2){
             //new variables C1..CN-2, replace Productions A -> B1..BN with A->B1C1..Ci->Bi+1Ci+1
             //A->B1C1
-            grammar.productions.push(new Production(grammar.productions[i].left, [grammar.productions[i].right[0], "C0"]))
+            grammar.productions.push(new Production(grammar.productions[i].left, [grammar.productions[i].right[0], "C" + index.toString()]))
 
             //C1->B2C2..Bn-3Cn-3
             for(let j = 0; j < n - 3; j++){
-                grammar.productions.push(new Production(["C" + j.toString()], [grammar.productions[i].right[j+1], "C" + (j + 1).toString()]))
+                grammar.productions.push(new Production(["C" + (index + j).toString()], [grammar.productions[i].right[j+1], "C" + (index + j + 1).toString()]))
             }
 
             //Cn-2->Bn-1Bn
-            grammar.productions.push(new Production(["C" + (n - 3).toString()], [grammar.productions[i].right[n-2], grammar.productions[i].right[n-1]]))
+            grammar.productions.push(new Production(["C" + (index + n - 3).toString()], [grammar.productions[i].right[n-2], grammar.productions[i].right[n-1]]))
 
             //remove replaced production
             grammar.productions.splice(i, 1)
             i -= 1 
+
+            index += n - 2
         }
     }
 
@@ -155,19 +157,36 @@ function convert_to_kuroda(grammar){
  */
 function grammar_to_lba(grammar){
     tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    
-    for(const i in grammar.productions){
+    index = 0
+    const gamma = new Map()
+
+    for(const i of grammar.productions){
         if(i.right.length == 1){            
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,L)
             //(z,B) -> (z,B,L)
+
+            gamma.set(['z' + index.toString(), i.right[0]], ['z' + (index + 1).toString(), i.left[0], 'L'])
+            index += 1
         } else if(i.right.length == 2){
             if(i.left.length == 2){
                 //for AB->CD, write B, change head to left, write A 
                 //(z,D) -> (z,B,L)
-                // if C (z,C) -> (z,A,L), if no C -> go back right
+                gamma.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'L'])
+                index += 1
+                
+                // if C (z,C) -> (z,A,L)
+                gamma.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
+                index += 1
+                //if no C -> go back right
             }else if(i.left.length == 1){
-                //for A->BC, write A, change head to left, write x, change head to left and do step 2 until x is replaced
+                //for A->BC, write A, change head to left
+                gamma.set(gamma.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L']))
+                index += 1
+                
+                //write x, change head to left and do step 2 until x is replaced
+                gamma.set(gamma.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'L']))
+                index += 1
         
                 //step 2:
                 //save left symbol and write <
@@ -180,6 +199,7 @@ function grammar_to_lba(grammar){
             throw new Error('not in kuroda normalform')
         }
     }
+    return gamma
 }
 
 nonterminals = ['S', 'B']
@@ -206,3 +226,7 @@ console.log('\nnew grammar:')
 for(let production of grammar.productions){
     console.log(production.left + " -> " + production.right)
 }
+
+lba = grammar_to_lba(grammar)
+
+console.log(lba)
