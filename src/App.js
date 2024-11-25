@@ -1,4 +1,5 @@
 import React from "react";
+import { useState } from "react";
 
 type Point = {
   x: number;
@@ -47,21 +48,48 @@ const StateTransition = ({ startPoint, endPoint, radius }) => {
 };
 
 function App() {
-  //startPoint.x < endPoint.x always
+  const [startValue, setStartValue] = useState('')
+  const [nonterminalValue, setNonterminalValue] = useState('')
+  const [terminalValue, setTerminalValue] = useState('')
+  const [productionValue, setProductionValue] = useState('')
+  
+
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    console.log(startValue, nonterminalValue, terminalValue, productionValue);
+  }
+
   const startPoint = {
     x: 50,
     y: 50,
   };
 
   const endPoint = {
-    x: 400,
-    y: 400,
+    x: 20000,
+    y: 20000,
   };
 
   const radius = 40
 
   return (
-      <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} />
+    <div>
+      <div>
+        <label>start:</label>
+        <textarea onChange={(e) => setStartValue(e.target.value)}></textarea>
+        <label>nonterminals:</label>
+        <textarea onChange={(e) => setNonterminalValue(e.target.value)}></textarea>
+        <label>terminals:</label>
+        <textarea  onChange={(e) => setTerminalValue(e.target.value)}></textarea>
+        <label>productions:</label>
+        <textarea rows={5} onChange={(e) => setProductionValue(e.target.value)}></textarea>
+        <button onClick={handleSubmit}>submit</button>
+      </div>
+      <div>
+        <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} />
+      </div>
+    </div>
   );
 }
 
