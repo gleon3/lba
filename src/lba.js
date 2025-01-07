@@ -1,11 +1,11 @@
-class Production{
+export class Production{
     constructor(left, right){
         this.left = left
         this.right = right
     }
 }
 
-class Grammar{
+export class Grammar{
     constructor(nonterminals, terminals, productions, start){
         this.nonterminals = nonterminals
         this.terminals = terminals
@@ -18,11 +18,14 @@ class Grammar{
  * converts the given type 1 grammar to kuroda normalform
  * @param {Grammar} grammar A type 1 grammar
  */
-function convert_to_kuroda(grammar){
+export function convert_to_kuroda(grammar){
+    let newProductions = []
+    let newTerminals = []
+
     //seperate terminals
     for(let i = 0; i < grammar.terminals.length; i++){
-        old_symbol = grammar.terminals[i]
-        new_variable = grammar.terminals[i].toUpperCase().concat(grammar.terminals[i])
+        let old_symbol = grammar.terminals[i]
+        let new_variable = grammar.terminals[i].toUpperCase().concat(grammar.terminals[i])
 
         grammar.terminals[i] = new_variable
 
@@ -45,10 +48,10 @@ function convert_to_kuroda(grammar){
         grammar.productions.push(new Production([new_variable], [old_symbol]))
     }
 
-    index = 0
+    let index = 0
 
     for(let i = 0; i < grammar.productions.length; i++){
-        n = grammar.productions[i].right.length 
+        const n = grammar.productions[i].right.length 
 
         if(grammar.productions[i].left.length == 1 && n > 2){
             //new variables C1..CN-2, replace Productions A -> B1..BN with A->B1C1..Ci->Bi+1Ci+1
@@ -72,8 +75,8 @@ function convert_to_kuroda(grammar){
     }
 
     for(let i = 0; i < grammar.productions.length; i++){
-        n = grammar.productions[i].right.length
-        m = grammar.productions[i].left.length
+        const n = grammar.productions[i].right.length
+        const m = grammar.productions[i].left.length
 
         if(m + 2 <= n){
             //new Variables D2..Dn-1
@@ -101,7 +104,7 @@ function convert_to_kuroda(grammar){
     }
 
     for(let i = 0; i < grammar.productions.length; i++){
-        n = grammar.productions[i].left.length
+        const n = grammar.productions[i].left.length
 
         if(grammar.productions[i].right.length == n + 1 && n >= 2){
             //new Variables D2..Dn
@@ -124,8 +127,8 @@ function convert_to_kuroda(grammar){
     }
 
     for(let i = 0; i < grammar.productions.length; i++){
-        n = grammar.productions[i].right.length
-        m = grammar.productions[i].left.length
+        const n = grammar.productions[i].right.length
+        const m = grammar.productions[i].left.length
 
         if(m == n && n > 2){
              //new Variables D2..Dn-1
@@ -155,43 +158,76 @@ function convert_to_kuroda(grammar){
  * converts the given type 1 grammar (in kuroda normalform) to a linear bounded automaton
  * @param {Grammar} grammar A type 1 grammar in kuroda normalform
  */
-function grammar_to_lba(grammar){
-    tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    index = 0
-    const gamma = new Map()
+export function grammar_to_lba(grammar){
+    const tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
+    let index = 0
+    const delta = new Map()
+
+    delta.set(['zs', '<'], ['z0', '<', 'R'])
 
     for(const i of grammar.productions){
         if(i.right.length == 1){            
             //for A->a or A->B replace current symbol with A
-            //(z,a) -> (z,A,L)
-            //(z,B) -> (z,B,L)
+            //(z,a) -> (z,A,R)
+            //(z,B) -> (z,B,R)
 
-            gamma.set(['z' + index.toString(), i.right[0]], ['z' + (index + 1).toString(), i.left[0], 'L'])
+            delta.set(['z' + index.toString(), i.right[0]], ['z' + (index + 1).toString(), i.left[0], 'R'])
             index += 1
         } else if(i.right.length == 2){
             if(i.left.length == 2){
                 //for AB->CD, write B, change head to left, write A 
-                //(z,D) -> (z,B,L)
-                gamma.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'L'])
+                //(z,C) -> (z,A,R)
+                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R'])
                 index += 1
                 
-                // if C (z,C) -> (z,A,L)
-                gamma.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
+                // if B (z,D) -> (z,B,R)
+                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'R'])
+                
+                //if no B: go back left
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+                    delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'L'])
+                }
                 index += 1
-                //if no C -> go back right
             }else if(i.left.length == 1){
                 //for A->BC, write A, change head to left
-                gamma.set(gamma.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L']))
+                delta.set(delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R']))
                 index += 1
                 
                 //write x, change head to left and do step 2 until x is replaced
-                gamma.set(gamma.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'L']))
+                delta.set(delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'R']))
                 index += 1
-        
+                
+                //go as far right as possible
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+                    delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'R'])
+                }
+
+                delta.set(['z' + index.toString() , '>'], ['z' + (index + 1).toString(), '>', 'L'])
+                index += 1
+
+                var currentSymbol
                 //step 2:
-                //save left symbol and write <
-                //change head to right, change current symbol with saved symbol
+                //save right symbol and write >
+                //change head to left, change current symbol with saved symbol
                 //stop swapping when x is replaced by another symbol
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){     
+                    delta.set(['z' + index.toString() , symbol], ['z' + (index+1).toString(), '>', 'L'])
+                    currentSymbol = symbol
+                    index += 1
+
+
+                    for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+                        if(symbol == 'x'){
+                            delta.set(['z' + index.toString() , symbol], ['z' + (index+1).toString(), currentSymbol, 'R'])
+                            index += 1
+                        }else{
+                            delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), currentSymbol, 'L'])
+                        }
+                    }
+                
+                    
+                }
+                
             }else{
                 throw new Error('not in kuroda normalform')
             }
@@ -199,20 +235,20 @@ function grammar_to_lba(grammar){
             throw new Error('not in kuroda normalform')
         }
     }
-    return gamma
+    return delta
 }
-
-nonterminals = ['S', 'B']
-terminals = ['a', 'b', 'c']
-start = 'S'
-productions = [new Production(['S'], ['a', 'S', 'B', 'c']), 
+/*
+const nonterminals = ['S', 'B']
+const terminals = ['a', 'b', 'c']
+const start = 'S'
+let productions = [new Production(['S'], ['a', 'S', 'B', 'c']), 
                 new Production(['S'], ['a', 'b', 'c']),
                 new Production(['c', 'B'], ['B', 'c']),  
                 new Production(['b', 'B'], ['b', 'b']) 
             ]
-productions2 = [new Production(['S', 'B'], ['a', 'S', 'B', 'c']), 
+let productions2 = [new Production(['S', 'B'], ['a', 'S', 'B', 'c']), 
         ]
-productions3 = [new Production(['S', 'B', 'a', 'b'], ['a', 'S', 'B', 'c']), 
+let productions3 = [new Production(['S', 'B', 'a', 'b'], ['a', 'S', 'B', 'c']), 
     ]
 
 console.log('old grammar:')
@@ -220,13 +256,13 @@ for(let production of productions){
     console.log(production.left + " -> " + production.right)
 }
 
-grammar = convert_to_kuroda(new Grammar(nonterminals, terminals, productions, start))
+const grammar = convert_to_kuroda(new Grammar(nonterminals, terminals, productions, start))
 
 console.log('\nnew grammar:')
 for(let production of grammar.productions){
     console.log(production.left + " -> " + production.right)
 }
 
-lba = grammar_to_lba(grammar)
+const lba = grammar_to_lba(grammar)
 
-console.log(lba)
+console.log(lba)*/

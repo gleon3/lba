@@ -1,5 +1,7 @@
 import React from "react";
 import { useState } from "react";
+import './App.css';
+import { Production, Grammar, convert_to_kuroda, grammar_to_lba } from "./lba.js";;
 
 type Point = {
   x: number;
@@ -58,7 +60,62 @@ function App() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    console.log(startValue, nonterminalValue, terminalValue, productionValue);
+    const nonterminals = nonterminalValue.split(' ').join('').split(',')
+    const terminals = terminalValue.split(' ').join('').split(',')
+    let productions = productionValue.split(' ').join('').split(',')
+
+    productions = handleProductions(productions)
+
+    //console.log(startValue, nonterminals, terminals, productions)
+
+    let grammar = new Grammar(nonterminals, terminals, productions, startValue)
+
+    console.log('old grammar:')
+    for(let production of productions){
+        console.log(production.left + " -> " + production.right)
+    }
+
+    let kuroda_grammar = convert_to_kuroda(grammar)
+
+    console.log('\nnew grammar:')
+    for(let production of kuroda_grammar.productions){
+        console.log(production.left + " -> " + production.right)
+    }
+
+    const lba = grammar_to_lba(kuroda_grammar)
+
+    console.log(lba)
+  }
+
+  function handleStartValue(startValue){
+    //TODO: check if startValue input is correct
+  }
+
+  function handleNonterminals(nonterminals){
+    //TODO: check if nonterminals input is correct
+  }
+
+  function handleTerminals(terminals){
+    //TODO: check if terminals input is correct
+  }
+
+  function handleProductions(productionsString){
+    //TODO: check if production input is correct
+
+    let productions = []
+
+    for (let prod of productionsString) {
+      prod = prod.trim()
+
+      const left = prod.split('->')[0]
+      const right = prod.split('->')[1]
+      
+      const production = new Production(left.split(''), right.split(''))
+
+      productions.push(production)
+    }
+
+    return productions
   }
 
   const startPoint = {
@@ -67,15 +124,15 @@ function App() {
   };
 
   const endPoint = {
-    x: 20000,
-    y: 20000,
+    x: 400,
+    y: 400,
   };
 
   const radius = 40
 
   return (
     <div>
-      <div>
+      <div className='input'>
         <label>start:</label>
         <textarea onChange={(e) => setStartValue(e.target.value)}></textarea>
         <label>nonterminals:</label>

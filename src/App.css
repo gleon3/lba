@@ -9,6 +9,12 @@
 
 .input{
   text-align: center;
+  margin: 1rem;
+  padding: 1rem;
+}
+
+.input > * {
+  margin: 5px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
