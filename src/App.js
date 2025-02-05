@@ -14,7 +14,7 @@ const StateTransition = ({ startPoint, endPoint, radius, stateIndex, stateIndex2
     x: Math.min(startPoint.x, endPoint.x),
     y: Math.min(startPoint.y, endPoint.y),
   };
-  const canvasWidth = Math.abs(endPoint.x - startPoint.x);
+  const canvasWidth = Math.abs(endPoint.x - startPoint.x - radius*2);
   const canvasHeight = Math.abs(endPoint.y - startPoint.y) + radius*2;
 
   const startY = ((startPoint.y < endPoint.y) ? radius : (canvasHeight - radius));
@@ -43,8 +43,8 @@ const StateTransition = ({ startPoint, endPoint, radius, stateIndex, stateIndex2
           y2={endPoint.y - canvasStartPoint.y + radius}
         />
         <text x="50%" y="50%" text-anchor="middle">{description}</text>
-        <circle cx={endX} cy={endY} r={radius} fill="none" stroke="black"/>
-        <text x={endX} y={endY} text-anchor="middle">{stateIndex2}</text>
+        {/*<circle cx={endX} cy={endY} r={radius} fill="none" stroke="black"/>
+        <text x={endX} y={endY} text-anchor="middle">{stateIndex2}</text>*/}
       </svg>
   );
 };
