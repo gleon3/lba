@@ -15,6 +15,23 @@ export class Grammar{
 }
 
 /**
+ * checks if grammar is in kuroda normalform
+ * @param {Grammar} grammar A type 1 grammar
+ */
+export function is_kuroda(grammar){
+    for(let production of grammar.productions){
+        if((production.left.length == 1 && production.left[0] in grammar.nonterminals && production.right.length == 1) ||
+            (production.left.length == 1 && production.left[0] in grammar.nonterminals && production.right.length == 2 && production.right[0] in grammar.nonterminals && production.right[1] in grammar.nonterminals) ||
+            (production.left.length == 2 && production.left[0] in grammar.nonterminals && production.left[1] in grammar.nonterminals && production.right.length == 2 && production.right[0] in grammar.nonterminals && production.right[1] in grammar.nonterminals)) {
+            //pass
+        }else{
+            return false
+        }
+    }
+    return true
+}
+
+/**
  * converts the given type 1 grammar to kuroda normalform
  * @param {Grammar} grammar A type 1 grammar
  */
@@ -190,11 +207,11 @@ export function grammar_to_lba(grammar){
                 index += 1
             }else if(i.left.length == 1){
                 //for A->BC, write A, change head to left
-                delta.set(delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R']))
+                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R'])
                 index += 1
                 
                 //write x, change head to left and do step 2 until x is replaced
-                delta.set(delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'R']))
+                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'R'])
                 index += 1
                 
                 //go as far right as possible
@@ -265,4 +282,9 @@ for(let production of grammar.productions){
 
 const lba = grammar_to_lba(grammar)
 
-console.log(lba)*/
+console.log(lba)
+S->aSBc,
+S->abc,
+cB->Bc,
+bB->bb
+*/

@@ -1,14 +1,14 @@
 import React from "react";
 import { useState } from "react";
 import './App.css';
-import { Production, Grammar, convert_to_kuroda, grammar_to_lba } from "./lba.js";;
+import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";;
 
 type Point = {
   x: number;
   y: number;
 };
 
-const StateTransition = ({ startPoint, endPoint, radius }) => {
+const StateTransition = ({ startPoint, endPoint, radius, stateIndex, stateIndex2, description }) => {
   
   const canvasStartPoint = {
     x: Math.min(startPoint.x, endPoint.x),
@@ -33,7 +33,7 @@ const StateTransition = ({ startPoint, endPoint, radius }) => {
         }}
       >
         <circle cx={startX} cy={startY} r={radius} fill="none" stroke="black"/>
-        <text x={startX} y={startY} text-anchor="middle">z1</text>
+        <text x={startX} y={startY} text-anchor="middle">{stateIndex}</text>
         <line
           stroke="#aaa"
           strokeWidth={1}
@@ -42,9 +42,9 @@ const StateTransition = ({ startPoint, endPoint, radius }) => {
           x2={endPoint.x - canvasStartPoint.x - radius*2 * Math.sign(endPoint.x- startPoint.x)}
           y2={endPoint.y - canvasStartPoint.y + radius}
         />
-        <text x="50%" y="50%" text-anchor="middle">arrow description</text>
+        <text x="50%" y="50%" text-anchor="middle">{description}</text>
         <circle cx={endX} cy={endY} r={radius} fill="none" stroke="black"/>
-        <text x={endX} y={endY} text-anchor="middle">z2</text>
+        <text x={endX} y={endY} text-anchor="middle">{stateIndex2}</text>
       </svg>
   );
 };
@@ -54,8 +54,8 @@ function App() {
   const [nonterminalValue, setNonterminalValue] = useState('')
   const [terminalValue, setTerminalValue] = useState('')
   const [productionValue, setProductionValue] = useState('')
-  
 
+  const [lba, setLBA] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -75,16 +75,15 @@ function App() {
         console.log(production.left + " -> " + production.right)
     }
 
-    let kuroda_grammar = convert_to_kuroda(grammar)
+    let kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
 
     console.log('\nnew grammar:')
     for(let production of kuroda_grammar.productions){
         console.log(production.left + " -> " + production.right)
     }
-
-    const lba = grammar_to_lba(kuroda_grammar)
-
     console.log(lba)
+    
+    setLBA(grammar_to_lba(kuroda_grammar))
   }
 
   function handleStartValue(startValue){
@@ -125,7 +124,7 @@ function App() {
 
   const endPoint = {
     x: 400,
-    y: 400,
+    y: 50,
   };
 
   const radius = 40
@@ -144,7 +143,11 @@ function App() {
         <button onClick={handleSubmit}>submit</button>
       </div>
       <div>
-        <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} />
+        <tbody>
+        {Array.from(lba).map(([key, value]) => 
+          <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} stateIndex={key[0]} stateIndex2={value[0]} description={key[1] + ' : ' + value[1] + ', ' + value[2]}/>)
+        }
+        </tbody>
       </div>
     </div>
   );
