@@ -74,7 +74,7 @@ function App() {
     for(let production of productions){
         console.log(production.left + " -> " + production.right)
     }
-
+    
     let kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
 
     console.log('\nnew grammar:')

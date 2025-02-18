@@ -1,3 +1,26 @@
+export class LBA{
+    constructor()
+    {
+        this.list = new Map();
+    }
+
+
+    add(startState, symbol, endState) {
+        if(this.list.get(startState)){
+            if(this.list.get(startState).get(symbol)){
+                this.list.set(startState, this.list.get(startState).get(symbol).push(endState))
+            }else{
+                this.list.set(startState, this.list.get(startState).set(symbol, [endState]))
+            }
+            
+        }else{
+            let innerMap = new Map()
+
+            this.list.set(startState, innerMap.set(symbol, [endState]))
+        }
+    }
+}
+
 export class Production{
     constructor(left, right){
         this.left = left
@@ -20,9 +43,9 @@ export class Grammar{
  */
 export function is_kuroda(grammar){
     for(let production of grammar.productions){
-        if((production.left.length == 1 && production.left[0] in grammar.nonterminals && production.right.length == 1) ||
-            (production.left.length == 1 && production.left[0] in grammar.nonterminals && production.right.length == 2 && production.right[0] in grammar.nonterminals && production.right[1] in grammar.nonterminals) ||
-            (production.left.length == 2 && production.left[0] in grammar.nonterminals && production.left[1] in grammar.nonterminals && production.right.length == 2 && production.right[0] in grammar.nonterminals && production.right[1] in grammar.nonterminals)) {
+        if((production.left.length == 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length == 1) ||
+            (production.left.length == 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length == 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1])) ||
+            (production.left.length == 2 && grammar.nonterminals.includes(production.left[0]) && grammar.nonterminals.includes(production.left[1]) && production.right.length == 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1]))) {
             //pass
         }else{
             return false
@@ -177,10 +200,13 @@ export function convert_to_kuroda(grammar){
  */
 export function grammar_to_lba(grammar){
     const tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    let index = 0
+    let index = 1
     const delta = new Map()
 
+    const delta_test = new LBA()
+
     delta.set(['zs', '<'], ['z0', '<', 'R'])
+    delta_test.add('zs', '<', ['z0', '<', 'R'])
 
     for(const i of grammar.productions){
         if(i.right.length == 1){            
@@ -188,41 +214,66 @@ export function grammar_to_lba(grammar){
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
 
-            delta.set(['z' + index.toString(), i.right[0]], ['z' + (index + 1).toString(), i.left[0], 'R'])
+            delta.set(['z0', i.right[0]], ['z' + index.toString(), i.left[0], 'L'])
+            delta_test.add('z0', i.right[0], ['z' + index.toString(), i.left[0], 'L'])
+
+            for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+                delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
+                delta_test.add('z' + index.toString(), symbol, ['z' + index.toString(), symbol, 'L'])
+            }
+
+            delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R']) 
+            delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R']) 
             index += 1
         } else if(i.right.length == 2){
+            
             if(i.left.length == 2){
                 //for AB->CD, write B, change head to left, write A 
                 //(z,C) -> (z,A,R)
-                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R'])
+                delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
+                delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.left[0], 'R'])
                 index += 1
                 
                 // if B (z,D) -> (z,B,R)
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'R'])
+                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[1], 'R'])
+                index += 1
+
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+                    delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
+                    delta_test.add('z' + index.toString(), symbol, ['z' + index.toString(), symbol, 'L'])
+                }
+
+                delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
+                delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
                 
-                //if no B: go back left
+            }else if(i.left.length == 1){
+                delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.right[0], 'R'])
+                delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.right[0], 'R'])
+                index += 1
+                
+                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
+                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[0], 'L'])
+                index += 1
+
+                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'L'])
+                delta_test.add('z' + index.toString(), i.right[0], ['z'+ (index + 1).toString(), 'x', 'L'])
+                index += 1
+                
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                     delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'L'])
-                }
-                index += 1
-            }else if(i.left.length == 1){
-                //for A->BC, write A, change head to left
-                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), i.left[0], 'R'])
-                index += 1
-                
-                //write x, change head to left and do step 2 until x is replaced
-                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'R'])
-                index += 1
-                
-                //go as far right as possible
-                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                    delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'R'])
+                    delta_test.add('z' + index.toString() , symbol, ['z' + index.toString(), symbol, 'L'])
                 }
 
-                delta.set(['z' + index.toString() , '>'], ['z' + (index + 1).toString(), '>', 'L'])
-                index += 1
-
-                var currentSymbol
+                //delta.set(['z' + index.toString() , '<'], ['z' + (index + 1).toString(), '<', 'R'])
+                //index += 1
+                delta.set(['z' + index.toString() , '<'], ['M', '<', 'R'])
+                delta_test.add('z' + index.toString() , '<', ['M', '<', 'R'])
+                
+                
+                
+                //var currentSymbol
+                /*
                 //step 2:
                 //save right symbol and write >
                 //change head to left, change current symbol with saved symbol
@@ -240,11 +291,12 @@ export function grammar_to_lba(grammar){
                         }else{
                             delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), currentSymbol, 'L'])
                         }
-                    }
-                
-                    
-                }
-                
+                    }    
+                }*/
+
+                delta.set(['M', '<'], ['z0', '<', 'R'])
+                delta_test.add('M', '<', ['z0', '<', 'R'])
+                //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
             }else{
                 throw new Error('not in kuroda normalform')
             }
@@ -252,6 +304,20 @@ export function grammar_to_lba(grammar){
             throw new Error('not in kuroda normalform')
         }
     }
+
+    delta.set(['z' + index.toString(), '>'], ['z' + (index+1).toString(), '>', 'L'])
+    delta_test.add('z' + index.toString(), '>', ['z' + (index+1).toString(), '>', 'L'])
+    index += 1
+    delta.set(['z' + index.toString(), 'S'], ['z' + (index+1).toString(), 'S', 'L'])
+    delta_test.add('z' + index.toString(), 'S', ['z' + (index+1).toString(), 'S', 'L'])
+    index += 1
+    //final state
+    delta.set(['z' + index.toString(), '<'], ['z' + (index+1).toString(), '<', 'N'])
+    delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
+    index += 1
+
+
+    console.log(delta_test)
     return delta
 }
 /*
