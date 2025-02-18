@@ -1,12 +1,78 @@
 import React from "react";
 import { useState } from "react";
 import './App.css';
-import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";;
+import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
+
 
 type Point = {
   x: number;
   y: number;
 };
+
+const LBA_Graph = ({lba}) => {
+  const states = []
+  const alreadyDrawn = []
+
+  let height = 0
+  let width = 0
+  const radius = 50
+  let test = 0
+  let j = 0
+  let i = 100
+
+  function drawTransition(){
+    
+  }
+
+
+  if(lba){
+    for(let [key,value] of lba.list){
+      //console.log('draw state', key)
+      //draw state : with name key 
+      for(let [innerkey, innervalue] of value){
+        if(true){
+          let transition_name = innerkey + ' : ' + innervalue[1] + ', ' + innervalue[2]
+
+          
+          //draw state : with name innervalue[0]
+
+          if(alreadyDrawn.includes(innervalue[0])){
+            
+          }else{
+            alreadyDrawn.push(innervalue[0])
+            states.push(
+              <svg>
+                <circle cx={i} cy={radius + j} r={radius} fill="none" stroke="black"/>
+                <text x={i} y={radius + j} text-anchor="middle">{innervalue[0]}</text>
+              </svg>)
+            test += 1
+            i += 150
+          }
+        }
+      }
+      if(width < i){
+        width += i
+      }
+      i = 100
+      if(test > 0){
+        j += 150
+        height += 150
+        test = 0
+      }
+    }
+  }
+  
+
+  return(
+    <svg
+        width={width}
+        height={height}
+      >
+        {states}
+        <line stroke="#aaa" strokeWidth={1} x1={50} y1={100} x2={50} y2={200}/>
+      </svg>
+  )
+}
 
 const StateTransition = ({ startPoint, endPoint, radius, stateIndex, stateIndex2, description }) => {
   
@@ -81,9 +147,10 @@ function App() {
     for(let production of kuroda_grammar.productions){
         console.log(production.left + " -> " + production.right)
     }
-    console.log(lba)
-    
+
     setLBA(grammar_to_lba(kuroda_grammar))
+    
+    console.log(lba.list)
   }
 
   function handleStartValue(startValue){
@@ -144,9 +211,11 @@ function App() {
       </div>
       <div>
         <tbody>
-        {Array.from(lba).map(([key, value]) => 
+        {
+          <LBA_Graph lba={lba}></LBA_Graph>
+        /*Array.from(lba).map(([key, value]) => 
           <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} stateIndex={key[0]} stateIndex2={value[0]} description={key[1] + ' : ' + value[1] + ', ' + value[2]}/>)
-        }
+        */}
         </tbody>
       </div>
     </div>

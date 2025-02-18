@@ -2,21 +2,24 @@ export class LBA{
     constructor()
     {
         this.list = new Map();
+        
     }
 
 
     add(startState, symbol, endState) {
+
         if(this.list.get(startState)){
             if(this.list.get(startState).get(symbol)){
-                this.list.set(startState, this.list.get(startState).get(symbol).push(endState))
+                //this.list.set(startState, this.list.get(startState).get(symbol).push(endState))
             }else{
-                this.list.set(startState, this.list.get(startState).set(symbol, [endState]))
+                this.list.set(startState, this.list.get(startState).set(symbol, endState))
             }
             
         }else{
             let innerMap = new Map()
-
-            this.list.set(startState, innerMap.set(symbol, [endState]))
+            
+            
+            this.list.set(startState, innerMap.set(symbol, endState))
         }
     }
 }
@@ -209,7 +212,7 @@ export function grammar_to_lba(grammar){
     delta_test.add('zs', '<', ['z0', '<', 'R'])
 
     for(const i of grammar.productions){
-        if(i.right.length == 1){            
+        if(i.right.length == 1){
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
@@ -226,8 +229,8 @@ export function grammar_to_lba(grammar){
             delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R']) 
             index += 1
         } else if(i.right.length == 2){
-            
             if(i.left.length == 2){
+                
                 //for AB->CD, write B, change head to left, write A 
                 //(z,C) -> (z,A,R)
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
@@ -316,9 +319,7 @@ export function grammar_to_lba(grammar){
     delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
     index += 1
 
-
-    console.log(delta_test)
-    return delta
+    return delta_test
 }
 /*
 const nonterminals = ['S', 'B']
