@@ -212,6 +212,10 @@ export function grammar_to_lba(grammar){
     delta_test.add('zs', '<', ['z0', '<', 'R'])
 
     for(const i of grammar.productions){
+        if(index==6){
+            console.log(i)
+    }
+
         if(i.right.length == 1){
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
@@ -235,7 +239,7 @@ export function grammar_to_lba(grammar){
                 //(z,C) -> (z,A,R)
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.left[0], 'R'])
-                index += 1
+                //index += 1
                 
                 // if B (z,D) -> (z,B,R)
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'R'])
@@ -243,8 +247,8 @@ export function grammar_to_lba(grammar){
                 index += 1
 
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                    delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
-                    delta_test.add('z' + index.toString(), symbol, ['z' + index.toString(), symbol, 'L'])
+                    delta.set(['z' + (index + 1).toString(), symbol], ['z' + (index + 1).toString(), symbol, 'L'])
+                    delta_test.add('z' + (index + 1).toString(), symbol, ['z' + (index + 1).toString(), symbol, 'L'])
                 }
 
                 delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
@@ -253,7 +257,7 @@ export function grammar_to_lba(grammar){
             }else if(i.left.length == 1){
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.right[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.right[0], 'R'])
-                index += 1
+                //index += 1
                 
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
                 delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[0], 'L'])
@@ -317,7 +321,7 @@ export function grammar_to_lba(grammar){
     //final state
     delta.set(['z' + index.toString(), '<'], ['z' + (index+1).toString(), '<', 'N'])
     delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
-    index += 1
+    //index += 1
 
     return delta_test
 }
@@ -355,3 +359,11 @@ S->abc,
 cB->Bc,
 bB->bb
 */
+
+/*
+S->AB,
+S->A,
+A->a,
+B->b,
+AB->BA
+ */

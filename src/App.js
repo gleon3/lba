@@ -11,21 +11,76 @@ type Point = {
 
 const LBA_Graph = ({lba}) => {
   const states = []
-  const alreadyDrawn = []
+  const alreadyDrawn = new Map()
 
   let height = 0
   let width = 0
   const radius = 50
   let test = 0
-  let j = 0
-  let i = 100
 
-  function drawTransition(){
-    
+
+  let j = 0
+  let i = 1
+
+  function drawTransition(startState){
+    j += 1
+
+    if(height < j * 200){
+      height += j *200
+    }
+
+    let transitions = lba.list.get(startState)
+
+    if(!transitions){
+      //draw endstate
+    }else{
+      let startX = alreadyDrawn.get(startState)[0]
+      let startY = alreadyDrawn.get(startState)[1]
+      for(let [key, value] of transitions){
+        let transition_name = key + ' : ' + value[1] + ', ' + value[2]
+
+
+        if(alreadyDrawn.get(value[0])){
+          if(startState == value[0]){
+            //self transition
+          }else{
+            //transition to state that already has been drawn
+          }
+        }else{
+          
+
+          states.push(
+            <svg>
+              <text x={startX+ i*150} y={3*radius - 5 + j*200} text-anchor="middle">{transition_name}</text>
+              <line stroke="#aaa" strokeWidth={1} x1={startX*150} y1={radius + j*200} x2={i*150} y2={radius + j*200 + 100}/>
+              <circle cx={i*150} cy={100+ 2* radius + j*200} r={radius} fill="none" stroke="black"/>
+              <text x={i*150} y={100+ 2* radius + j*200} text-anchor="middle">{value[0]}</text>
+            </svg>)
+          alreadyDrawn.set(value[0], [i, j])
+          
+          drawTransition(value[0])
+          i += 1
+          j-=1
+        }
+      }
+      if(width < i * radius * 2){
+        width += i * radius * 2
+      }
+      i=startX
+    }
   }
 
 
   if(lba){
+    states.push(
+      <svg>
+        <line stroke="#aaa" strokeWidth={1} x1={150} y1={radius} x2={150} y2={radius + 100}/>
+        <circle cx={150} cy={100+ 2* radius} r={radius} fill="none" stroke="black"/>
+        <text x={i*150} y={100+ 2* radius} text-anchor="middle">{'zs'}</text>
+      </svg>)
+    alreadyDrawn.set('zs', [1,0])
+    drawTransition('zs')
+    /*
     for(let [key,value] of lba.list){
       //console.log('draw state', key)
       //draw state : with name key 
@@ -44,6 +99,7 @@ const LBA_Graph = ({lba}) => {
               <svg>
                 <circle cx={i} cy={radius + j} r={radius} fill="none" stroke="black"/>
                 <text x={i} y={radius + j} text-anchor="middle">{innervalue[0]}</text>
+                <line stroke="#aaa" strokeWidth={1} x1={i} y1={radius + j} x2={i} y2={radius + j + 100}/>
               </svg>)
             test += 1
             i += 150
@@ -59,7 +115,7 @@ const LBA_Graph = ({lba}) => {
         height += 150
         test = 0
       }
-    }
+    }*/
   }
   
 
@@ -69,7 +125,7 @@ const LBA_Graph = ({lba}) => {
         height={height}
       >
         {states}
-        <line stroke="#aaa" strokeWidth={1} x1={50} y1={100} x2={50} y2={200}/>
+        
       </svg>
   )
 }
