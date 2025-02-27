@@ -203,7 +203,7 @@ export function convert_to_kuroda(grammar){
  */
 export function grammar_to_lba(grammar){
     const tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    let index = 1
+    let index = 0
     const delta = new Map()
 
     const delta_test = new LBA()
@@ -212,15 +212,12 @@ export function grammar_to_lba(grammar){
     delta_test.add('zs', '<', ['z0', '<', 'R'])
 
     for(const i of grammar.productions){
-        if(index==6){
-            console.log(i)
-    }
-
         if(i.right.length == 1){
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
 
+            index+=1
             delta.set(['z0', i.right[0]], ['z' + index.toString(), i.left[0], 'L'])
             delta_test.add('z0', i.right[0], ['z' + index.toString(), i.left[0], 'L'])
 
@@ -230,34 +227,34 @@ export function grammar_to_lba(grammar){
             }
 
             delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R']) 
-            delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R']) 
-            index += 1
+            delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
         } else if(i.right.length == 2){
             if(i.left.length == 2){
                 
                 //for AB->CD, write B, change head to left, write A 
                 //(z,C) -> (z,A,R)
+                index += 1
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.left[0], 'R'])
-                //index += 1
                 
                 // if B (z,D) -> (z,B,R)
-                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'R'])
-                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[1], 'R'])
-                index += 1
+                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'L'])
+                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[1], 'L'])
 
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                     delta.set(['z' + (index + 1).toString(), symbol], ['z' + (index + 1).toString(), symbol, 'L'])
                     delta_test.add('z' + (index + 1).toString(), symbol, ['z' + (index + 1).toString(), symbol, 'L'])
                 }
+                index += 1
 
                 delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
                 delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
                 
             }else if(i.left.length == 1){
+                
+                index += 1
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.right[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.right[0], 'R'])
-                //index += 1
                 
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
                 delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[0], 'L'])
@@ -301,8 +298,8 @@ export function grammar_to_lba(grammar){
                     }    
                 }*/
 
-                delta.set(['M', '<'], ['z0', '<', 'R'])
-                delta_test.add('M', '<', ['z0', '<', 'R'])
+                //delta.set(['M', '<'], ['z0', '<', 'R'])
+                //delta_test.add('M', '<', ['z0', '<', 'R'])
                 //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
             }else{
                 throw new Error('not in kuroda normalform')
@@ -311,10 +308,10 @@ export function grammar_to_lba(grammar){
             throw new Error('not in kuroda normalform')
         }
     }
-
-    delta.set(['z' + index.toString(), '>'], ['z' + (index+1).toString(), '>', 'L'])
-    delta_test.add('z' + index.toString(), '>', ['z' + (index+1).toString(), '>', 'L'])
     index += 1
+    delta.set(['z0', '>'], ['z' + index.toString(), '>', 'L'])
+    delta_test.add('z0', '>', ['z' + index.toString(), '>', 'L'])
+    
     delta.set(['z' + index.toString(), 'S'], ['z' + (index+1).toString(), 'S', 'L'])
     delta_test.add('z' + index.toString(), 'S', ['z' + (index+1).toString(), 'S', 'L'])
     index += 1
@@ -323,6 +320,7 @@ export function grammar_to_lba(grammar){
     delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
     //index += 1
 
+    console.log(index)
     return delta_test
 }
 /*
