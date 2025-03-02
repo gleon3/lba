@@ -298,8 +298,8 @@ export function grammar_to_lba(grammar){
                     }    
                 }*/
 
-                //delta.set(['M', '<'], ['z0', '<', 'R'])
-                //delta_test.add('M', '<', ['z0', '<', 'R'])
+                delta.set(['M', '<'], ['z0', '<', 'R'])
+                delta_test.add('M', '<', ['z0', '<', 'R'])
                 //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
             }else{
                 throw new Error('not in kuroda normalform')

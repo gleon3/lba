@@ -9,6 +9,10 @@ type Point = {
   y: number;
 };
 
+const Transition = ({startPoint, endPoint, text}) => {
+//TODO
+}
+
 const LBA_Graph = ({lba}) => {
   const states = []
   const alreadyDrawn = new Map()
@@ -16,7 +20,7 @@ const LBA_Graph = ({lba}) => {
   
   const radius = 50
 
-  let height = (100+2*radius)
+  let height = 100
   let width = 0
   let test = 0
 
@@ -25,11 +29,12 @@ const LBA_Graph = ({lba}) => {
   let i = 1
 
   function drawTransition(startState){
-    j += 1
 
-    if(height < j * 200 + (100+2*radius)){
+    if(height <= j * 200 +  + (100+2*radius)){
       height += (100+2*radius)
     }
+
+    
 
     let transitions = lba.list.get(startState)
 
@@ -45,10 +50,22 @@ const LBA_Graph = ({lba}) => {
         if(alreadyDrawn.get(value[0])){
           if(startState == value[0]){
             //self transition
+            states.push(
+              <svg>
+                <path d={'M ' + (i*150-radius) + ' ' + (100+ 2* radius + j*200) + ' l ' + (-50) + ' ' + (0)} stroke="blue" strokeWidth={2}/>
+              </svg>
+            )
+
           }else{
             //transition to state that already has been drawn
             let stateX = alreadyDrawn.get(value[0])[0] 
             let stateY = alreadyDrawn.get(value[0])[1] +1
+
+            states.push(
+              <svg>
+                <path d={'M ' + (i*150-radius) + ' ' + (100+ 2* radius + j*200) + ' L ' + ((stateX*150) - radius) + ' ' + (stateY*200)} stroke="red" strokeWidth={2}/>
+              </svg>
+            )
 
             /*states.push(
               <svg>
@@ -59,13 +76,14 @@ const LBA_Graph = ({lba}) => {
           }
         }else{
           
-
+          j += 1
           states.push(
             <svg>
-              <text x={startX+ i*150} y={3*radius - 5 + j*200} text-anchor="middle">{transition_name}</text>
-              <line stroke="#aaa" strokeWidth={1} x1={startX*150} y1={radius + j*200} x2={i*150} y2={radius + j*200 + 100}/>
+              <path id={'line'+i+j} d={'M ' + (startX*150) + ' ' + (radius + j*200) + ' L ' + (i*150) + ' ' + (radius + j*200 + 100)} stroke="#aaa" strokeWidth={2}/>
+              <text textAnchor="middle"><textPath href={'#line'+i+j} startOffset='50%'>{transition_name}</textPath></text>
               <circle cx={i*150} cy={100+ 2* radius + j*200} r={radius} fill="none" stroke="black"/>
               <text x={i*150} y={100+ 2* radius + j*200} text-anchor="middle">{value[0]}</text>
+
             </svg>)
           
           if(!alreadyDrawn.get(value[0])){
