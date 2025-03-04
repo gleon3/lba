@@ -7,19 +7,20 @@ export class LBA{
 
 
     add(startState, symbol, endState) {
-
+        
         if(this.list.get(startState)){
             if(this.list.get(startState).get(symbol)){
-                //this.list.set(startState, this.list.get(startState).get(symbol).push(endState))
+                console.log('TEST', symbol, startState, endState)
+                this.list.set(startState, this.list.get(startState).set(symbol, (this.list.get(startState).get(symbol).concat([endState]))))
             }else{
-                this.list.set(startState, this.list.get(startState).set(symbol, endState))
+                this.list.set(startState, this.list.get(startState).set(symbol, [endState]))
             }
             
         }else{
             let innerMap = new Map()
             
             
-            this.list.set(startState, innerMap.set(symbol, endState))
+            this.list.set(startState, innerMap.set(symbol, [endState]))
         }
     }
 }
@@ -202,8 +203,9 @@ export function convert_to_kuroda(grammar){
  * @param {Grammar} grammar A type 1 grammar in kuroda normalform
  */
 export function grammar_to_lba(grammar){
+    //TODO: fix bug that skips S->A case in example
     const tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    let index = 0
+    let index = 1
     const delta = new Map()
 
     const delta_test = new LBA()
@@ -213,6 +215,7 @@ export function grammar_to_lba(grammar){
 
     for(const i of grammar.productions){
         if(i.right.length == 1){
+            
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
@@ -220,6 +223,7 @@ export function grammar_to_lba(grammar){
             index+=1
             delta.set(['z0', i.right[0]], ['z' + index.toString(), i.left[0], 'L'])
             delta_test.add('z0', i.right[0], ['z' + index.toString(), i.left[0], 'L'])
+            
 
             for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                 delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
@@ -228,6 +232,7 @@ export function grammar_to_lba(grammar){
 
             delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R']) 
             delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
+            
         } else if(i.right.length == 2){
             if(i.left.length == 2){
                 
@@ -301,6 +306,7 @@ export function grammar_to_lba(grammar){
                 delta.set(['M', '<'], ['z0', '<', 'R'])
                 delta_test.add('M', '<', ['z0', '<', 'R'])
                 //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
+                console.log(index)
             }else{
                 throw new Error('not in kuroda normalform')
             }
@@ -318,9 +324,9 @@ export function grammar_to_lba(grammar){
     //final state
     delta.set(['z' + index.toString(), '<'], ['z' + (index+1).toString(), '<', 'N'])
     delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
-    //index += 1
+    index += 1
 
-    console.log(index)
+    
     return delta_test
 }
 /*
