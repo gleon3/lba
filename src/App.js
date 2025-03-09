@@ -85,15 +85,37 @@ const LBA_Graph = ({ lba }) => {
             )*/
           }
         } else {
-
           j += 1
+
+          let x1 = startX * 150
+          let y1 = radius + j * 200
+          let x2 = i*150
+          let y2 = radius + j * 200 + 100
+
+          let dirx = x1 - x2
+          let diry = y1 - y2
+
+          let dir_length = Math.sqrt(dirx*dirx+diry*diry)
+
+          //normalize
+          dirx = dirx/dir_length
+          diry = diry/dir_length
+
+          let ax = dirx * Math.cos(1/2*Math.sqrt(2)) - diry * Math.sin(1/2*Math.sqrt(2))
+          let ay = dirx * Math.sin(1/2*Math.sqrt(2)) + diry * Math.cos(1/2*Math.sqrt(2))
+          
+          let bx = dirx * Math.cos(1/2*Math.sqrt(2)) + diry * Math.sin(1/2*Math.sqrt(2))
+          let by = - dirx * Math.sin(1/2*Math.sqrt(2)) + diry * Math.cos(1/2*Math.sqrt(2))
+
+          
           states.push(
             <svg>
               <path id={'line' + i + j} d={'M ' + (startX * 150) + ' ' + (radius + j * 200) + ' L ' + (i * 150) + ' ' + (radius + j * 200 + 100)} stroke="#aaa" strokeWidth={2} />
+              <path d={'M ' + x2 + ' ' + y2 + ' l ' + (15*ax) + ' ' + 15*ay} stroke="green" strokeWidth={2}></path>
+              <path d={'M ' + x2 + ' ' + y2 + ' l ' + (15*bx) + ' ' + 15*by} stroke="green" strokeWidth={2}></path>
               <text textAnchor="middle"><textPath href={'#line' + i + j} startOffset='50%'>{transition_name}</textPath></text>
               <circle cx={i * 150} cy={100 + 2 * radius + j * 200} r={radius} fill="none" stroke="black" />
               <text x={i * 150} y={100 + 2 * radius + j * 200} text-anchor="middle">{key}</text>
-
             </svg>)
 
           if (!alreadyDrawn.get(key)) {
