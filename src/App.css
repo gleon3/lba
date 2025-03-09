@@ -13,6 +13,10 @@
   padding: 1rem;
 }
 
+#test{
+  white-space: pre;
+}
+
 .input > * {
   margin: 5px;
 }

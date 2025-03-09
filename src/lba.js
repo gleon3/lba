@@ -209,9 +209,11 @@ export function grammar_to_lba(grammar){
     const delta = new Map()
 
     const delta_test = new LBA()
+    const delta_test2 = new LBA()
 
     delta.set(['zs', '<'], ['z0', '<', 'R'])
     delta_test.add('zs', '<', ['z0', '<', 'R'])
+    delta_test2.add('zs', 'z0', ['<', '<', 'R'])
 
     for(const i of grammar.productions){
         if(i.right.length == 1){
@@ -223,15 +225,18 @@ export function grammar_to_lba(grammar){
             index+=1
             delta.set(['z0', i.right[0]], ['z' + index.toString(), i.left[0], 'L'])
             delta_test.add('z0', i.right[0], ['z' + index.toString(), i.left[0], 'L'])
+            delta_test2.add('z0', 'z' + index.toString(), [i.right[0], i.left[0], 'L'])
             
 
             for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                 delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
                 delta_test.add('z' + index.toString(), symbol, ['z' + index.toString(), symbol, 'L'])
+                delta_test2.add('z' + index.toString(), 'z' + index.toString(), [symbol, symbol, 'L'])
             }
 
             delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R']) 
             delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
+            delta_test2.add('z' + index.toString(), 'z0', ['<', '<', 'R'])
             
         } else if(i.right.length == 2){
             if(i.left.length == 2){
@@ -241,43 +246,52 @@ export function grammar_to_lba(grammar){
                 index += 1
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.left[0], 'R'])
+                delta_test2.add('z0', 'z'+ index.toString(), [i.right[0], i.left[0], 'R'])
                 
                 // if B (z,D) -> (z,B,R)
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'L'])
                 delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[1], 'L'])
+                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[1], i.left[1], 'L'])
 
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                     delta.set(['z' + (index + 1).toString(), symbol], ['z' + (index + 1).toString(), symbol, 'L'])
                     delta_test.add('z' + (index + 1).toString(), symbol, ['z' + (index + 1).toString(), symbol, 'L'])
+                    delta_test2.add('z' + (index + 1).toString(), 'z' + (index + 1).toString(), [symbol, symbol, 'L'])
                 }
                 index += 1
 
                 delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
                 delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
+                delta_test2.add('z' + index.toString(), 'z0', ['<', '<', 'R'])
                 
             }else if(i.left.length == 1){
                 
                 index += 1
                 delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.right[0], 'R'])
                 delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.right[0], 'R'])
+                delta_test2.add('z0', 'z'+ index.toString(), [i.right[0], i.right[0], 'R'])
                 
                 delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
                 delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[0], 'L'])
+                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[1], i.left[0], 'L'])
                 index += 1
 
                 delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'L'])
                 delta_test.add('z' + index.toString(), i.right[0], ['z'+ (index + 1).toString(), 'x', 'L'])
+                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[0], 'x', 'L'])
                 index += 1
                 
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
                     delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'L'])
                     delta_test.add('z' + index.toString() , symbol, ['z' + index.toString(), symbol, 'L'])
+                    delta_test2.add('z' + index.toString() , 'z' + index.toString(), [symbol, symbol, 'L'])
                 }
 
                 //delta.set(['z' + index.toString() , '<'], ['z' + (index + 1).toString(), '<', 'R'])
                 //index += 1
                 delta.set(['z' + index.toString() , '<'], ['M', '<', 'R'])
                 delta_test.add('z' + index.toString() , '<', ['M', '<', 'R'])
+                delta_test2.add('z' + index.toString() , 'M', ['<', '<', 'R'])
                 
                 
                 
@@ -305,6 +319,7 @@ export function grammar_to_lba(grammar){
 
                 delta.set(['M', '<'], ['z0', '<', 'R'])
                 delta_test.add('M', '<', ['z0', '<', 'R'])
+                delta_test2.add('M', 'z0', ['<', '<', 'R'])
                 //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
                 console.log(index)
             }else{
@@ -317,17 +332,21 @@ export function grammar_to_lba(grammar){
     index += 1
     delta.set(['z0', '>'], ['z' + index.toString(), '>', 'L'])
     delta_test.add('z0', '>', ['z' + index.toString(), '>', 'L'])
+    delta_test2.add('z0', 'z' + index.toString(), ['>', '>', 'L'])
     
     delta.set(['z' + index.toString(), 'S'], ['z' + (index+1).toString(), 'S', 'L'])
     delta_test.add('z' + index.toString(), 'S', ['z' + (index+1).toString(), 'S', 'L'])
+    delta_test2.add('z' + index.toString(), 'z' + (index+1).toString(), ['S', 'S', 'L'])
     index += 1
     //final state
     delta.set(['z' + index.toString(), '<'], ['z' + (index+1).toString(), '<', 'N'])
     delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
+    delta_test2.add('z' + index.toString(), 'z' + (index+1).toString(), ['<', '<', 'N'])
     index += 1
 
     
-    return delta_test
+    //return delta_test
+    return delta_test2
 }
 /*
 const nonterminals = ['S', 'B']
