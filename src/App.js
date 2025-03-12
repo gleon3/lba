@@ -3,22 +3,214 @@ import { useState } from "react";
 import './App.css';
 import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
 
+/**
+ * A component that displays a start state.
+ *
+ * @typedef {Object} StartStateProps
+ * @property {Object} position - The x and y position of the state.
+ * @property {Number} radius - The radius of the outer circle of the state.
+ * @property {Number} transition_length - The length of the transition to the start state.
+ *
+ * @param {StartStateProps} props
+ * @returns {JSX.Element}
+ */
+const StartState = ({ position, radius, transition_length }) => {
+  const statePosition = {
+    x: position.x,
+    y: position.y + transition_length + 2*radius,
+  }
 
-type Point = {
-  x: number;
-  y: number;
-};
+  return(
+    <svg>
+      <Transition startPoint={position} endPoint={statePosition} label={["start"]}></Transition>
+      <State position={statePosition} radius={radius} name={'zs'}></State>
+    </svg>
+  )
+}
 
-const Transition = ({ startPoint, endPoint, text }) => {
-  //TODO
+/**
+ * A component that displays a state.
+ *
+ * @typedef {Object} StateProps
+ * @property {Object} position - The x and y position of the state.
+ * @property {Number} radius - The radius of the outer circle of the state.
+ * @property {String} name - The name of the string.
+ *
+ * @param {StateProps} props
+ * @returns {JSX.Element}
+ */
+const State = ({ position, radius, name }) => {
+  return(
+    <svg>
+      <circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
+      <text x={position.x} y={position.y} text-anchor="middle">{name}</text>
+    </svg>
+  )
+}
+
+/**
+ * A component that displays a end state.
+ *
+ * @typedef {Object} EndStateProps
+ * @property {Object} position - The x and y position of the state.
+ * @property {Number} radius - The radius of the outer circle of the state.
+ * @property {String} name - The name of the end state.
+ *
+ * @param {EndStateProps} props
+ * @returns {JSX.Element}
+ */
+const EndState = ({ position, radius, name }) => {
+  return(
+    <svg>
+      <State position={position} radius={radius} name={name}></State>
+      <circle cx={position.x} cy={position.y} r={radius-5} fill="none" stroke="black" />
+    </svg>
+  )
+}
+
+/**
+ * A component that displays the arrowhead of a transition.
+ *
+ * @typedef {Object} TransitionProps
+ * @property {Object} startPoint - The x and y position of the state the transition starts at.
+ * @property {Object} endPoint - The x and y position of the state the transition ends at.
+ * @property {Number} angle - The angle of the arrow.
+ * @property {Number} arrowLength - The length of the arrow.
+ *
+ * @param {TransitionProps} props
+ * @returns {JSX.Element}
+ */
+const ArrowHead = ({startPoint, endPoint, angle, arrowLength}) => {
+  let dirx = startPoint.x - endPoint.x
+  let diry = startPoint.y - endPoint.y
+
+  let dir_length = Math.sqrt(dirx*dirx+diry*diry)
+
+  //normalize
+  dirx = dirx/dir_length
+  diry = diry/dir_length
+
+  let ax = dirx * Math.cos(angle) - diry * Math.sin(angle)
+  let ay = dirx * Math.sin(angle) + diry * Math.cos(angle)
+          
+  let bx = dirx * Math.cos(angle) + diry * Math.sin(angle)
+  let by = - dirx * Math.sin(angle) + diry * Math.cos(angle)
+  
+  return(
+    <svg>
+      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*ax} y2={endPoint.y + arrowLength*ay} stroke="black" strokeWidth={3}></line>
+      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*bx} y2={endPoint.y + arrowLength*by} stroke="black" strokeWidth={3}></line>
+    </svg>
+  )
+}
+
+/**
+ * A component that displays a transition between two states.
+ *
+ * @typedef {Object} TransitionProps
+ * @property {Object} startPoint - The x and y position of the state the transition starts at.
+ * @property {Object} endPoint - The x and y position of the state the transition ends at.
+ * @property {String[]} label - The label of the transition.
+ *
+ * @param {TransitionProps} props
+ * @returns {JSX.Element}
+ */
+const Transition = ({ startPoint, endPoint, label }) => {
+  const transitionStart = {
+    x: startPoint.x,
+    y: startPoint.y + 50 //TODO: radius
+  }
+
+  const transitionEnd = {
+    x: endPoint.x,
+    y: endPoint.y - 50 //TODO: radius
+  }
+
+  if(startPoint.x == endPoint.x && startPoint.y == endPoint.y){
+    return(
+      <svg>
+        <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+        </defs>
+        <path d={'M ' + startPoint.x + ' ' + startPoint.y + ' s -125 -12.5 0 -25'} stroke="#aaa" fill="none" strokeWidth={2} markerEnd="url(#arrow)"/>
+        <text x={startPoint.x} y={startPoint.y} textAnchor="middle">{
+          label.map(value => {
+            return <tspan x={startPoint.x - 125/2} dy='15'>{value}</tspan>
+          })
+        }
+        </text>
+      </svg>
+    )
+  }
+  else if(startPoint.x == endPoint.x && startPoint.y >= endPoint.y){
+    return(
+      <svg>
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+          </defs>
+          <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 300) + ' ' + ((transitionStart.y - transitionEnd.y)/2) + ' ' + (transitionEnd.x - 50) + ' ' + (transitionEnd.y-50)} stroke="#aaa" strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
+          <text textAnchor="middle">
+            <textPath href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
+              label.map(element => {
+                return <tspan x='0' dy={15}>{element}</tspan>
+              })}
+            </textPath>
+          </text>
+        </svg>
+    )
+  }else{
+    return(
+      <svg>
+        <defs>
+          <marker
+            id="arrow"
+            viewBox="0 0 10 10"
+            refX="5"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" />
+          </marker>
+        </defs>
+        <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + transitionEnd.x + ' ' + transitionStart.y + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke="#aaa" strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
+        <text textAnchor="middle">
+          <textPath href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
+            label.map(element => {
+              return <tspan x='0' dy={15}>{element}</tspan>
+            })}
+          </textPath>
+        </text>
+      </svg>
+    )
+  }
 }
 
 const LBA_Graph = ({ lba }) => {
   const states = []
   const alreadyDrawn = new Map()
 
-
   const radius = 50
+  const distanceY = 300
+  const distanceX = 300
 
   let height = 100
   let width = 0
@@ -30,13 +222,13 @@ const LBA_Graph = ({ lba }) => {
 
   function drawTransition(startState) {
 
-    if (height <= j * 200 + + (100 + 2 * radius)) {
-      height += (100 + 2 * radius)
+    if (height <= j * distanceY + (100 + 2 * radius)) {
+      height += distanceY
     }
 
 
 
-    let transitions = lba.list.get(startState)
+    let transitions = lba.delta.get(startState)
 
     if (!transitions) {
       //draw endstate
@@ -44,26 +236,16 @@ const LBA_Graph = ({ lba }) => {
       let startX = alreadyDrawn.get(startState)[0]
       let startY = alreadyDrawn.get(startState)[1]
       for (let [key, v] of transitions) {
-        //console.log(key, value)
-        let transition_name = ''
-        for (let value of v) {
-          transition_name += value[0] + ' : ' + value[1] + ', ' + value[2] + '\n'
-        }
-
-
         if (alreadyDrawn.get(key)) {
           if (startState == key) {
             //self transition
+            const startPoint = {
+              x: i*distanceX-radius,
+              y: (100 + 2 * radius + j * distanceY),
+            }
+
             states.push(
-              <svg>
-                <path d={'M ' + (i * 150 - radius) + ' ' + (100 + 2 * radius + j * 200) +
-                  ' c -100 0 0 -50 0 -5'} stroke="blue" fill="none" strokeWidth={2} />
-                <text x={i*150 - radius} y={100 + 2*radius + j*200} textAnchor="middle">{
-                  v.map(value => {
-                    return <tspan x={i*150 - radius} dy='15'>{value[0] + ' : ' + value[1] + ', ' + value[2]}</tspan>
-                  })}
-                </text>
-              </svg>
+              <Transition startPoint={startPoint} endPoint={startPoint} label={v}></Transition>
             )
 
           } else {
@@ -71,52 +253,51 @@ const LBA_Graph = ({ lba }) => {
             let stateX = alreadyDrawn.get(key)[0]
             let stateY = alreadyDrawn.get(key)[1] + 1
 
+            const startPoint = {
+              x: i*distanceX,
+              y: 2*radius + j*distanceY,
+            }
+
+            const endPoint = {
+              x: stateX*distanceX,
+              y: stateY*distanceY 
+            }
+
             states.push(
               <svg>
-                <path d={'M ' + (i * 150) + ' ' + (100 - radius + 2 * radius + j * 200) + ' Q ' + (i * 150) + ' ' + (100 - radius + 2 * radius + j * 200) + ' ' + ((stateX * 150)) + ' ' + (stateY * 200 + radius)} fill="none" stroke="red" strokeWidth={2} />
+                <Transition startPoint={startPoint} endPoint={endPoint} label={v}></Transition>
               </svg>
             )
-
-            /*states.push(
-              <svg>
-                <text x={stateX*150 + radius} y={radius + stateY*200 - radius} text-anchor="middle">{transition_name}</text>
-                <line stroke="#aaa" strokeWidth={1} x1={startX*150} y1={radius + stateY*200 + 100} x2={stateX*150 + radius} y2={radius + stateY*200-radius}/>
-              </svg>
-            )*/
           }
         } else {
           j += 1
 
-          let x1 = startX * 150
-          let y1 = radius + j * 200
-          let x2 = i*150
-          let y2 = radius + j * 200 + 100
+          const startPoint = {
+            x: startX*distanceX,
+            y: j * distanceY - 2*radius
+          }
 
-          let dirx = x1 - x2
-          let diry = y1 - y2
-
-          let dir_length = Math.sqrt(dirx*dirx+diry*diry)
-
-          //normalize
-          dirx = dirx/dir_length
-          diry = diry/dir_length
-
-          let ax = dirx * Math.cos(1/2*Math.sqrt(2)) - diry * Math.sin(1/2*Math.sqrt(2))
-          let ay = dirx * Math.sin(1/2*Math.sqrt(2)) + diry * Math.cos(1/2*Math.sqrt(2))
+          const endPoint = {
+            x: i * distanceX,
+            y: 100 + 2 * radius + j * distanceY,
+          }
           
-          let bx = dirx * Math.cos(1/2*Math.sqrt(2)) + diry * Math.sin(1/2*Math.sqrt(2))
-          let by = - dirx * Math.sin(1/2*Math.sqrt(2)) + diry * Math.cos(1/2*Math.sqrt(2))
-
+          if(key == lba.endStates){
+            states.push(
+              <svg>
+                <Transition startPoint={startPoint} endPoint={endPoint} label={v}></Transition>
+                <EndState position={endPoint} radius={radius} name={key}></EndState>
+              </svg>
+            )
+          }else{
+            states.push(
+              <svg>
+                <Transition startPoint={startPoint} endPoint={endPoint} label={v}></Transition>
+                <State position={endPoint} radius={radius} name={key}></State>
+              </svg>
+            )
+          }
           
-          states.push(
-            <svg>
-              <path id={'line' + i + j} d={'M ' + (startX * 150) + ' ' + (radius + j * 200) + ' L ' + (i * 150) + ' ' + (radius + j * 200 + 100)} stroke="#aaa" strokeWidth={2} />
-              <path d={'M ' + x2 + ' ' + y2 + ' l ' + (15*ax) + ' ' + 15*ay} stroke="green" strokeWidth={2}></path>
-              <path d={'M ' + x2 + ' ' + y2 + ' l ' + (15*bx) + ' ' + 15*by} stroke="green" strokeWidth={2}></path>
-              <text textAnchor="middle"><textPath href={'#line' + i + j} startOffset='50%'>{transition_name}</textPath></text>
-              <circle cx={i * 150} cy={100 + 2 * radius + j * 200} r={radius} fill="none" stroke="black" />
-              <text x={i * 150} y={100 + 2 * radius + j * 200} text-anchor="middle">{key}</text>
-            </svg>)
 
           if (!alreadyDrawn.get(key)) {
             alreadyDrawn.set(key, [i, j])
@@ -128,8 +309,8 @@ const LBA_Graph = ({ lba }) => {
         }
 
       }
-      if (width < i * 150) {
-        width += 150
+      if (width < i * distanceX) {
+        width += distanceX  
       }
       i = startX
     }
@@ -137,53 +318,16 @@ const LBA_Graph = ({ lba }) => {
 
 
   if (lba) {
-    states.push(
-      <svg>
-        <line stroke="#aaa" strokeWidth={1} x1={150} y1={radius} x2={150} y2={radius + 100} />
-        <circle cx={150} cy={100 + 2 * radius} r={radius} fill="none" stroke="black" />
-        <text x={i * 150} y={100 + 2 * radius} text-anchor="middle">{'zs'}</text>
-      </svg>)
+    const stateRadius = 50
+    const startPosition = {
+      x: 300, 
+      y: 0,
+    }
+
+    states.push(<StartState position={startPosition} radius={stateRadius} transition_length={100}></StartState>)
     alreadyDrawn.set('zs', [1, 0])
     drawTransition('zs')
-    /*
-    for(let [key,value] of lba.list){
-      //console.log('draw state', key)
-      //draw state : with name key 
-      for(let [innerkey, innervalue] of value){
-        if(true){
-          let transition_name = innerkey + ' : ' + innervalue[1] + ', ' + innervalue[2]
-
-          
-          //draw state : with name innervalue[0]
-
-          if(alreadyDrawn.includes(innervalue[0])){
-            
-          }else{
-            alreadyDrawn.push(innervalue[0])
-            states.push(
-              <svg>
-                <circle cx={i} cy={radius + j} r={radius} fill="none" stroke="black"/>
-                <text x={i} y={radius + j} text-anchor="middle">{innervalue[0]}</text>
-                <line stroke="#aaa" strokeWidth={1} x1={i} y1={radius + j} x2={i} y2={radius + j + 100}/>
-              </svg>)
-            test += 1
-            i += 150
-          }
-        }
-      }
-      if(width < i){
-        width += i
-      }
-      i = 100
-      if(test > 0){
-        j += 150
-        height += 150
-        test = 0
-      }
-    }*/
   }
-
-
   return (
     <svg
       width={width}
@@ -194,47 +338,6 @@ const LBA_Graph = ({ lba }) => {
     </svg>
   )
 }
-
-const StateTransition = ({ startPoint, endPoint, radius, stateIndex, stateIndex2, description }) => {
-
-  const canvasStartPoint = {
-    x: Math.min(startPoint.x, endPoint.x),
-    y: Math.min(startPoint.y, endPoint.y),
-  };
-  const canvasWidth = Math.abs(endPoint.x - startPoint.x);
-  const canvasHeight = Math.abs(endPoint.y - startPoint.y) + radius * 2;
-
-  const startY = ((startPoint.y < endPoint.y) ? radius : (canvasHeight - radius));
-  const endY = ((startPoint.y < endPoint.y) ? (canvasHeight - radius) : radius);
-
-  const startX = ((startPoint.x < endPoint.x) ? radius : (canvasWidth - radius));
-  const endX = ((startPoint.x < endPoint.x) ? (canvasWidth - radius) : radius);
-
-  return (
-    <svg
-      width={canvasWidth}
-      height={canvasHeight}
-      style={{
-        backgroundColor: "#eee",
-        transform: `translate(${canvasStartPoint.x}px, ${canvasStartPoint.y}px)`,
-      }}
-    >
-      <circle cx={startX} cy={startY} r={radius} fill="none" stroke="black" />
-      <text x={startX} y={startY} text-anchor="middle">{stateIndex}</text>
-      <line
-        stroke="#aaa"
-        strokeWidth={1}
-        x1={startPoint.x - canvasStartPoint.x + radius * 2 * Math.sign(endPoint.x - startPoint.x)}
-        y1={startPoint.y - canvasStartPoint.y + radius}
-        x2={endPoint.x - canvasStartPoint.x - radius * 2 * Math.sign(endPoint.x - startPoint.x)}
-        y2={endPoint.y - canvasStartPoint.y + radius}
-      />
-      <text x="50%" y="50%" text-anchor="middle">{description}</text>
-      <circle cx={endX} cy={endY} r={radius} fill="none" stroke="black" />
-      <text x={endX} y={endY} text-anchor="middle">{stateIndex2}</text>
-    </svg>
-  );
-};
 
 function App() {
   const [startValue, setStartValue] = useState('')
@@ -271,7 +374,7 @@ function App() {
 
     setLBA(grammar_to_lba(kuroda_grammar))
 
-    console.log(lba.list)
+    console.log(lba.delta)
   }
 
   function handleStartValue(startValue) {
@@ -304,18 +407,6 @@ function App() {
 
     return productions
   }
-
-  const startPoint = {
-    x: 50,
-    y: 50,
-  };
-
-  const endPoint = {
-    x: 400,
-    y: 50,
-  };
-
-  const radius = 40
 
   return (
     <div>

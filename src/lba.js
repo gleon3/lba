@@ -1,38 +1,25 @@
-export class LBA{
-    constructor()
-    {
-        this.list = new Map();
-        
-    }
-
-
-    add(startState, symbol, endState) {
-        
-        if(this.list.get(startState)){
-            if(this.list.get(startState).get(symbol)){
-                console.log('TEST', symbol, startState, endState)
-                this.list.set(startState, this.list.get(startState).set(symbol, (this.list.get(startState).get(symbol).concat([endState]))))
-            }else{
-                this.list.set(startState, this.list.get(startState).set(symbol, [endState]))
-            }
-            
-        }else{
-            let innerMap = new Map()
-            
-            
-            this.list.set(startState, innerMap.set(symbol, [endState]))
-        }
-    }
-}
-
+/** Class representing a production. */
 export class Production{
+    /**
+     * Create a production.
+     * @param {String[]} left - The left side of the production.
+     * @param {String[]} right - The right side of the production.
+     */
     constructor(left, right){
         this.left = left
         this.right = right
     }
 }
 
+/** Class representing a grammar. */
 export class Grammar{
+    /**
+     * Create a grammar.
+     * @param {String[]} nonterminals - The nonterminals.
+     * @param {String[]} terminals - The terminals.
+     * @param {Production[]} productions - The productions.
+     * @param {String} start - The start symbol.
+     */
     constructor(nonterminals, terminals, productions, start){
         this.nonterminals = nonterminals
         this.terminals = terminals
@@ -41,9 +28,74 @@ export class Grammar{
     }
 }
 
+/** Class representing a linear bounded automaton. */
+export class LBA{
+    /**
+     * Creates an empty linear bounded automaton based upon a given grammar.
+     * @param {Grammar} grammar - The grammar the lba is based upon.
+     * @param {String} startState - The start state.
+     * @param {String} left_endmarker - The left endmarker.
+     * @param {String} right_endmarker - The right endmarker.
+     * @param {String} blank - The blank symbol.
+     */
+    constructor(grammar, startState, left_endmarker, right_endmarker, blank)
+    {
+        this.states = [startState];
+        this.input_alphabet = grammar.terminals.concat(grammar.nonterminals);
+        this.tape_alphabet = this.input_alphabet.concat([left_endmarker, right_endmarker, blank]);
+        this.startState = startState;
+        this.blank = blank
+        this.delta = new Map();
+        this.endStates = [];
+    }
+
+    /**
+     * Adds a transition to the lba.
+     * @param {String} startState - The state where the transition begins.
+     * @param {String} endState - The state the tranistion goes to.
+     * @param {String} label - The text on the transition.
+     */
+    add_transition(startState, endState, label) {
+        if(this.delta.get(startState)){
+            if(this.delta.get(startState).get(endState)){
+                this.delta.set(startState, this.delta.get(startState).set(endState, (this.delta.get(startState).get(endState).concat([label]))))
+            }else{
+                this.delta.set(startState, this.delta.get(startState).set(endState, [label]))
+            }
+        }else{
+            let innerMap = new Map()
+            
+            
+            this.delta.set(startState, innerMap.set(endState, [label]))
+        }
+    }
+
+    /**
+     * Adds a state to the lba.
+     * 
+     * @return {state} The state that was added to the lba.
+     */
+    add_state(){
+        const state = 'z' + (this.states.length - 1)
+
+        this.states.push(state)
+
+        return state
+    }
+
+    /**
+     * Adds a end state to the lba.
+     * @param {String} state - The end state to add to the lba.
+     */
+    add_endState(state){
+        this.endStates.push(state)
+    }
+}
+
 /**
- * checks if grammar is in kuroda normalform
- * @param {Grammar} grammar A type 1 grammar
+ * Checks if grammar is in kuroda normalform.
+ * @param {Grammar} grammar - A type 1 grammar.
+ * @return {boolean} True if grammar is in Kuroda normalform.
  */
 export function is_kuroda(grammar){
     for(let production of grammar.productions){
@@ -59,13 +111,11 @@ export function is_kuroda(grammar){
 }
 
 /**
- * converts the given type 1 grammar to kuroda normalform
- * @param {Grammar} grammar A type 1 grammar
+ * Converts the given type 1 grammar to kuroda normalform.
+ * @param {Grammar} grammar - A type 1 grammar.
+ * @return {grammar} The type 1 grammar in kuroda normalform.
  */
 export function convert_to_kuroda(grammar){
-    let newProductions = []
-    let newTerminals = []
-
     //seperate terminals
     for(let i = 0; i < grammar.terminals.length; i++){
         let old_symbol = grammar.terminals[i]
@@ -199,99 +249,65 @@ export function convert_to_kuroda(grammar){
 }
 
 /**
- * converts the given type 1 grammar (in kuroda normalform) to a linear bounded automaton
- * @param {Grammar} grammar A type 1 grammar in kuroda normalform
+ * Converts the given type 1 grammar (in kuroda normalform) to a linear bounded automaton.
+ * @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
+ * @return {lba} The linear bounded automaton.
  */
 export function grammar_to_lba(grammar){
-    //TODO: fix bug that skips S->A case in example
-    const tape_alphabet = grammar.terminals.concat(grammar.nonterminals).concat(['<', '>', 'x'])
-    let index = 1
-    const delta = new Map()
+    let index = 0
+    const lba = new LBA(grammar, 'zs', '<', '>', 'x')
 
-    const delta_test = new LBA()
-    const delta_test2 = new LBA()
-
-    delta.set(['zs', '<'], ['z0', '<', 'R'])
-    delta_test.add('zs', '<', ['z0', '<', 'R'])
-    delta_test2.add('zs', 'z0', ['<', '<', 'R'])
+    lba.add_state('z0')
+    lba.add_transition('zs', 'z0', '< : <, R')
 
     for(const i of grammar.productions){
         if(i.right.length == 1){
-            
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
-
-            index+=1
-            delta.set(['z0', i.right[0]], ['z' + index.toString(), i.left[0], 'L'])
-            delta_test.add('z0', i.right[0], ['z' + index.toString(), i.left[0], 'L'])
-            delta_test2.add('z0', 'z' + index.toString(), [i.right[0], i.left[0], 'L'])
+            
+            const newState = lba.add_state()
+            lba.add_transition('z0', newState, i.right[0] + ' : ' + i.left[0] +  ', L')
             
 
-            for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                delta.set(['z' + index.toString(), symbol], ['z' + index.toString(), symbol, 'L'])
-                delta_test.add('z' + index.toString(), symbol, ['z' + index.toString(), symbol, 'L'])
-                delta_test2.add('z' + index.toString(), 'z' + index.toString(), [symbol, symbol, 'L'])
+            for(let symbol of grammar.terminals.concat(grammar.nonterminals).concat(['>', 'x'])){
+                lba.add_transition(newState, newState, symbol + ' : ' + symbol + ', L')
             }
 
-            delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R']) 
-            delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
-            delta_test2.add('z' + index.toString(), 'z0', ['<', '<', 'R'])
-            
+            lba.add_transition(newState, 'z0', '< : <, R')
         } else if(i.right.length == 2){
             if(i.left.length == 2){
                 
                 //for AB->CD, write B, change head to left, write A 
                 //(z,C) -> (z,A,R)
-                index += 1
-                delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.left[0], 'R'])
-                delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.left[0], 'R'])
-                delta_test2.add('z0', 'z'+ index.toString(), [i.right[0], i.left[0], 'R'])
+                const newState1 = lba.add_state()
+                lba.add_transition('z0', newState1, i.right[0] + ' : ' + i.left[0] + ', R')
                 
                 // if B (z,D) -> (z,B,R)
-                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[1], 'L'])
-                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[1], 'L'])
-                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[1], i.left[1], 'L'])
+                const newState2= lba.add_state()
+                lba.add_transition(newState1, newState2, i.right[1] + ' : ' +  i.left[1] + ', L')
 
-                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                    delta.set(['z' + (index + 1).toString(), symbol], ['z' + (index + 1).toString(), symbol, 'L'])
-                    delta_test.add('z' + (index + 1).toString(), symbol, ['z' + (index + 1).toString(), symbol, 'L'])
-                    delta_test2.add('z' + (index + 1).toString(), 'z' + (index + 1).toString(), [symbol, symbol, 'L'])
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals).concat(['>', 'x'])){
+                    lba.add_transition(newState2, newState2, symbol + ' : ' + symbol + ', L')
                 }
-                index += 1
 
-                delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
-                delta_test.add('z' + index.toString(), '<', ['z0', '<', 'R'])
-                delta_test2.add('z' + index.toString(), 'z0', ['<', '<', 'R'])
+                lba.add_transition(newState2, 'z0', '< : <, R')
                 
             }else if(i.left.length == 1){
+                const newState1 = lba.add_state()
+                lba.add_transition('z0', newState1, i.right[0] + ' : ' + i.right[0] + ', R')
                 
-                index += 1
-                delta.set(['z0', i.right[0]], ['z'+ index.toString(), i.right[0], 'R'])
-                delta_test.add('z0', i.right[0], ['z'+ index.toString(), i.right[0], 'R'])
-                delta_test2.add('z0', 'z'+ index.toString(), [i.right[0], i.right[0], 'R'])
-                
-                delta.set(['z' + index.toString(), i.right[1]], ['z'+ (index + 1).toString(), i.left[0], 'L'])
-                delta_test.add('z' + index.toString(), i.right[1], ['z'+ (index + 1).toString(), i.left[0], 'L'])
-                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[1], i.left[0], 'L'])
-                index += 1
+                const newState2 = lba.add_state()
+                lba.add_transition(newState1, newState2, i.right[1] + ' : ' + i.left[0] + ', L')
 
-                delta.set(['z' + index.toString(), i.right[0]], ['z'+ (index + 1).toString(), 'x', 'L'])
-                delta_test.add('z' + index.toString(), i.right[0], ['z'+ (index + 1).toString(), 'x', 'L'])
-                delta_test2.add('z' + index.toString(), 'z'+ (index + 1).toString(), [i.right[0], 'x', 'L'])
-                index += 1
+                const newState3 = lba.add_state()
+                lba.add_transition(newState2, newState3, i.right[0] + ' : x, L')
                 
-                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                    delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), symbol, 'L'])
-                    delta_test.add('z' + index.toString() , symbol, ['z' + index.toString(), symbol, 'L'])
-                    delta_test2.add('z' + index.toString() , 'z' + index.toString(), [symbol, symbol, 'L'])
+                for(let symbol of grammar.terminals.concat(grammar.nonterminals).concat(['>', 'x'])){
+                    lba.add_transition(newState3 , newState3, symbol + ' : ' + symbol + ', L')
                 }
 
-                //delta.set(['z' + index.toString() , '<'], ['z' + (index + 1).toString(), '<', 'R'])
-                //index += 1
-                delta.set(['z' + index.toString() , '<'], ['M', '<', 'R'])
-                delta_test.add('z' + index.toString() , '<', ['M', '<', 'R'])
-                delta_test2.add('z' + index.toString() , 'M', ['<', '<', 'R'])
+                lba.add_transition(newState3 , 'M', '< : <, R')
                 
                 
                 
@@ -317,11 +333,7 @@ export function grammar_to_lba(grammar){
                     }    
                 }*/
 
-                delta.set(['M', '<'], ['z0', '<', 'R'])
-                delta_test.add('M', '<', ['z0', '<', 'R'])
-                delta_test2.add('M', 'z0', ['<', '<', 'R'])
-                //delta.set(['z' + index.toString(), '<'], ['z0', '<', 'R'])
-                console.log(index)
+                lba.add_transition('M', 'z0', '< : <, R')
             }else{
                 throw new Error('not in kuroda normalform')
             }
@@ -329,24 +341,18 @@ export function grammar_to_lba(grammar){
             throw new Error('not in kuroda normalform')
         }
     }
-    index += 1
-    delta.set(['z0', '>'], ['z' + index.toString(), '>', 'L'])
-    delta_test.add('z0', '>', ['z' + index.toString(), '>', 'L'])
-    delta_test2.add('z0', 'z' + index.toString(), ['>', '>', 'L'])
+    const newState1 = lba.add_state()
+    lba.add_transition('z0', newState1, '> : >, L')
     
-    delta.set(['z' + index.toString(), 'S'], ['z' + (index+1).toString(), 'S', 'L'])
-    delta_test.add('z' + index.toString(), 'S', ['z' + (index+1).toString(), 'S', 'L'])
-    delta_test2.add('z' + index.toString(), 'z' + (index+1).toString(), ['S', 'S', 'L'])
-    index += 1
-    //final state
-    delta.set(['z' + index.toString(), '<'], ['z' + (index+1).toString(), '<', 'N'])
-    delta_test.add('z' + index.toString(), '<', ['z' + (index+1).toString(), '<', 'N'])
-    delta_test2.add('z' + index.toString(), 'z' + (index+1).toString(), ['<', '<', 'N'])
-    index += 1
+    const newState2 = lba.add_state()
+    lba.add_transition(newState1, newState2, 'S : S, L')
 
+    //final state
+    const newState3 = lba.add_state()
+    lba.add_endState(newState3)
+    lba.add_transition(newState2, newState3, '< : <, N')
     
-    //return delta_test
-    return delta_test2
+    return lba
 }
 /*
 const nonterminals = ['S', 'B']
