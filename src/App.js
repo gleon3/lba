@@ -423,7 +423,8 @@ function App() {
 
   return (
     <div>
-      <div className='input'>
+      <div class="menu gui-element">
+        <legend>Menu</legend>
         <label>start:</label>
         <textarea onChange={(e) => setStartValue(e.target.value)}></textarea>
         <label>nonterminals:</label>
@@ -434,14 +435,15 @@ function App() {
         <textarea rows={5} onChange={(e) => setProductionValue(e.target.value)}></textarea>
         <button onClick={handleSubmit}>submit</button>
       </div>
-      <div>
-        <tbody>
-          {
-            <LBA_Graph lba={lba}></LBA_Graph>
-        /*Array.from(lba).map(([key, value]) => 
-          <StateTransition startPoint={startPoint} endPoint={endPoint} radius={radius} stateIndex={key[0]} stateIndex2={value[0]} description={key[1] + ' : ' + value[1] + ', ' + value[2]}/>)
-        */}
-        </tbody>
+      <div class="grammar-info gui-element">
+        <legend>grammar-info</legend>
+      </div>
+      <div class="lba-info gui-element">
+        <legend>lba-info</legend>
+      </div>
+      <div class="LBA gui-element">
+        <legend>Linear Bounded Automaton</legend>
+        <LBA_Graph lba={lba}></LBA_Graph>
       </div>
     </div>
   );

@@ -7,14 +7,27 @@
   pointer-events: none;
 }
 
-.input{
-  text-align: center;
-  margin: 1rem;
-  padding: 1rem;
+.gui-element{
+  outline-style: solid;
+  margin: 1.5rem;
+  padding: 1.5rem;
 }
 
-#test{
-  white-space: pre;
+.gui-element>legend{
+  position: absolute;
+  margin-top: -2.5rem;
+  margin-left: 0;
+  padding: 0 0.5rem;
+  background-color: white;
+}
+
+.menu{
+  text-align: center;
+}
+
+.LBA{
+  overflow-x: scroll;
+  overflow-y: scroll;
 }
 
 .input > * {
