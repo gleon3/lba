@@ -58,7 +58,9 @@ export class LBA{
     add_transition(startState, endState, label) {
         if(this.delta.get(startState)){
             if(this.delta.get(startState).get(endState)){
-                this.delta.set(startState, this.delta.get(startState).set(endState, (this.delta.get(startState).get(endState).concat([label]))))
+                if(!this.delta.get(startState).get(endState).includes(label)){
+                    this.delta.set(startState, this.delta.get(startState).set(endState, (this.delta.get(startState).get(endState).concat([label]))))
+                }
             }else{
                 this.delta.set(startState, this.delta.get(startState).set(endState, [label]))
             }
@@ -78,6 +80,18 @@ export class LBA{
     add_state(){
         const state = 'z' + (this.states.length - 1)
 
+        this.states.push(state)
+
+        return state
+    }
+
+    /**
+     * Adds a state to the lba.
+     * 
+     * @param {String} state - The name of the state to be added to the lba.
+     * @return {state} The state that was added to the lba.
+     */
+    add_state_with_name(state){
         this.states.push(state)
 
         return state
@@ -254,7 +268,6 @@ export function convert_to_kuroda(grammar){
  * @return {lba} The linear bounded automaton.
  */
 export function grammar_to_lba(grammar){
-    let index = 0
     const lba = new LBA(grammar, 'zs', '<', '>', 'x')
 
     lba.add_state('z0')
@@ -308,30 +321,6 @@ export function grammar_to_lba(grammar){
                 }
 
                 lba.add_transition(newState3 , 'M', '< : <, R')
-                
-                
-                
-                //var currentSymbol
-                /*
-                //step 2:
-                //save right symbol and write >
-                //change head to left, change current symbol with saved symbol
-                //stop swapping when x is replaced by another symbol
-                for(let symbol of grammar.terminals.concat(grammar.nonterminals)){     
-                    delta.set(['z' + index.toString() , symbol], ['z' + (index+1).toString(), '>', 'L'])
-                    currentSymbol = symbol
-                    index += 1
-
-
-                    for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-                        if(symbol == 'x'){
-                            delta.set(['z' + index.toString() , symbol], ['z' + (index+1).toString(), currentSymbol, 'R'])
-                            index += 1
-                        }else{
-                            delta.set(['z' + index.toString() , symbol], ['z' + index.toString(), currentSymbol, 'L'])
-                        }
-                    }    
-                }*/
 
                 lba.add_transition('M', 'z0', '< : <, R')
             }else{
@@ -353,6 +342,30 @@ export function grammar_to_lba(grammar){
     lba.add_transition(newState2, newState3, '< : <, N')
     
     return lba
+}
+
+/**
+ * Creates a linear bounded automaton that is used as a step in productions of the form of A->BC to remove the blank symbol.
+ * @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
+ * @return {lba} A linear bounded automaton that overwrites the blank symbol.
+ */
+export function lba_eliminate_x(grammar){
+    let throwaway = new LBA(grammar, 'zi', '<', '>', 'x')
+
+    for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
+        const newStateSymbol = throwaway.add_state_with_name(symbol)
+        throwaway.add_transition('zi', newStateSymbol, symbol + ' : <, R')
+
+        for(let innerSymbol of grammar.terminals.concat(grammar.nonterminals)){
+            throwaway.add_transition(symbol, innerSymbol ,innerSymbol + ' : ' + symbol + ', R')
+        }
+
+        throwaway.add_transition(newStateSymbol, 'zo', 'x : ' + symbol + ', L')
+    }
+
+    //lba.add_transition(newState, 'z0', '< : <, R')
+
+    return throwaway.delta
 }
 /*
 const nonterminals = ['S', 'B']
