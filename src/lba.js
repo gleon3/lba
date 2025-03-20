@@ -34,15 +34,15 @@ export class LBA{
      * Creates an empty linear bounded automaton based upon a given grammar.
      * @param {Grammar} grammar - The grammar the lba is based upon.
      * @param {String} startState - The start state.
-     * @param {String} left_endmarker - The left endmarker.
-     * @param {String} right_endmarker - The right endmarker.
+     * @param {String} leftEndmarker - The left endmarker.
+     * @param {String} rightEndmarker - The right endmarker.
      * @param {String} blank - The blank symbol.
      */
-    constructor(grammar, startState, left_endmarker, right_endmarker, blank)
+    constructor(grammar, startState, leftEndmarker, rightEndmarker, blank)
     {
         this.states = [startState];
-        this.input_alphabet = grammar.terminals.concat(grammar.nonterminals);
-        this.tape_alphabet = this.input_alphabet.concat([left_endmarker, right_endmarker, blank]);
+        this.inputAlphabet = grammar.terminals.concat(grammar.nonterminals);
+        this.tapeAlphabet = this.inputAlphabet.concat([leftEndmarker, rightEndmarker, blank]);
         this.startState = startState;
         this.blank = blank
         this.delta = new Map();
@@ -75,26 +75,21 @@ export class LBA{
     /**
      * Adds a state to the lba.
      * 
+     * @param {String} [state] - The name of the state to be added to the lba (is optional).
      * @return {state} The state that was added to the lba.
      */
-    add_state(){
-        const state = 'z' + (this.states.length - 1)
+    add_state(state=null){
+        if(state){
+            this.states.push(state)
 
-        this.states.push(state)
+            return state
+        }else{
+            const state = 'z' + (this.states.length - 1)
 
-        return state
-    }
-
-    /**
-     * Adds a state to the lba.
-     * 
-     * @param {String} state - The name of the state to be added to the lba.
-     * @return {state} The state that was added to the lba.
-     */
-    add_state_with_name(state){
-        this.states.push(state)
-
-        return state
+            this.states.push(state)
+    
+            return state
+        }
     }
 
     /**
@@ -353,7 +348,7 @@ export function lba_eliminate_x(grammar){
     let throwaway = new LBA(grammar, 'zi', '<', '>', 'x')
 
     for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-        const newStateSymbol = throwaway.add_state_with_name(symbol)
+        const newStateSymbol = throwaway.add_state(symbol)
         throwaway.add_transition('zi', newStateSymbol, symbol + ' : <, R')
 
         for(let innerSymbol of grammar.terminals.concat(grammar.nonterminals)){

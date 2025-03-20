@@ -18,7 +18,7 @@ import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_
 const StartState = ({ position, radius, name, transition_length }) => {
   const statePosition = {
     x: position.x,
-    y: position.y + transition_length + 2*radius,
+    y: position.y + transition_length,
   }
 
   return(
@@ -117,6 +117,8 @@ const ArrowHead = ({startPoint, endPoint, angle, arrowLength}) => {
  * @returns {JSX.Element}
  */
 const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
+  const [isFocused, setFocus] = useState(false);
+
   if(startPoint.x == endPoint.x && startPoint.y == endPoint.y){ //self transition
     const transitionStart = {
       x: startPoint.x + 50,
@@ -128,8 +130,10 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
       y: endPoint.y //TODO: radius
     }
 
+    
+
     return(
-      <svg>
+      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
         <defs>
             <marker
               id="arrow"
@@ -142,8 +146,8 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
               <path d="M 0 0 L 10 5 L 0 10 z" />
             </marker>
         </defs>
-        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke="#aaa" fill="none" strokeWidth={2} markerEnd="url(#arrow)"/>
-        <text x={transitionStart.x} y={transitionStart.y} textAnchor="middle">{
+        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd="url(#arrow)"/>
+        <text fill={isFocused ? "red" : "#aaa"} x={transitionStart.x} y={transitionStart.y} textAnchor="middle">{
           label.map(value => {
             return <tspan x={transitionStart.x + 125/2} dy='15'>{value}</tspan>
           })
@@ -164,7 +168,7 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
     }
 
     return(
-      <svg>
+      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
           <defs>
             <marker
               id="arrow"
@@ -177,9 +181,9 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
               <path d="M 0 0 L 10 5 L 0 10 z" />
             </marker>
           </defs>
-          <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 100) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke="#aaa" strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
-          <text textAnchor="middle">
-            <textPath href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
+          <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 100) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
+          <text fill={isFocused ? "red" : "#aaa"} textAnchor="middle">
+            <textPath   href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
               label.map(element => {
                 return <tspan x='0' dy={15}>{element}</tspan>
               })}
@@ -202,7 +206,7 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
     }
 
     return(
-      <svg>
+      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
         <defs>
           <marker
             id="arrow"
@@ -215,8 +219,8 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
             <path d="M 0 0 L 10 5 L 0 10 z" />
           </marker>
         </defs>
-        <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke="#aaa" strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
-        <text textAnchor="middle">
+        <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
+        <text fill={isFocused ? "red" : "#aaa"} textAnchor="middle">
           <textPath href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
             label.map(element => {
               return <tspan x='0' dy={15}>{element}</tspan>
@@ -229,17 +233,12 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
 }
 
 //TOdo: rework
-const LBA_Graph = ({ lba }) => {
+const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
   const lbaGraph = []
   const alreadyDrawn = new Map()
 
-  const radius = 50
-  const distanceY = 300
-  const distanceX = 300
-
-  let height = 100
+  let height = distanceY + 2*radius
   let width = 0
-  let test = 0
 
   let j = 0
   let i = 1
@@ -336,11 +335,11 @@ const LBA_Graph = ({ lba }) => {
   if (lba) {
     const stateRadius = 50
     const startPosition = {
-      x: 300, 
+      x: distanceX, 
       y: 0,
     }
 
-    lbaGraph.push(<StartState position={startPosition} radius={stateRadius} name={lba.startState} transition_length={200}></StartState>)
+    lbaGraph.push(<StartState position={startPosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}></StartState>)
     alreadyDrawn.set(lba.startState, [1, 0])
     drawTransition(lba.startState)
   }
@@ -357,6 +356,9 @@ function App() {
   const [productionValue, setProductionValue] = useState('')
 
   const [lba, setLBA] = useState('')
+  const [eliminateX, setEliminateX] = useState('')
+
+  const [kurodaGrammar, setKurodaGrammar] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -367,8 +369,6 @@ function App() {
 
     productions = handleProductions(productions)
 
-    //console.log(startValue, nonterminals, terminals, productions)
-
     let grammar = new Grammar(nonterminals, terminals, productions, startValue)
 
     console.log('old grammar:')
@@ -378,16 +378,20 @@ function App() {
 
     let kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
 
+    setKurodaGrammar(kuroda_grammar)
+
     console.log('\nnew grammar:')
     for (let production of kuroda_grammar.productions) {
       console.log(production.left + " -> " + production.right)
     }
 
     setLBA(grammar_to_lba(kuroda_grammar))
+    setEliminateX(lba_eliminate_x(kuroda_grammar))
+    
 
 
     console.log(lba.delta)
-    console.log('M = ', lba_eliminate_x(kuroda_grammar))
+    console.log('M = ', eliminateX)
   }
 
   function handleStartValue(startValue) {
@@ -437,13 +441,25 @@ function App() {
       </div>
       <div class="grammar-info gui-element">
         <legend>grammar-info</legend>
+        <pre>
+          {JSON.stringify(kurodaGrammar, null, 2)}
+        </pre>
+        <p>{kurodaGrammar.start}</p>
+        <p>add old grammar, is kuroda? if no add kuroda grammar if yes explain how it is already</p>
       </div>
       <div class="lba-info gui-element">
         <legend>lba-info</legend>
+        <pre>
+          {JSON.stringify(lba, null, 2)}
+        </pre>
+        <label>M=</label>
+        <pre>
+          {JSON.stringify(eliminateX, null, 2)}
+        </pre>
       </div>
       <div class="LBA gui-element">
         <legend>Linear Bounded Automaton</legend>
-        <LBA_Graph lba={lba}></LBA_Graph>
+        <LBA_Graph lba={lba} radius={50} distanceX={300} distanceY={300}></LBA_Graph>
       </div>
     </div>
   );

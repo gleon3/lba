@@ -25,9 +25,20 @@
   text-align: center;
 }
 
+.grammar-info{
+  overflow-y: scroll;
+  max-height: 270px;
+}
+
+.lba-info{
+  overflow-y: scroll;
+  max-height: 270px;
+}
+
 .LBA{
   overflow-x: scroll;
   overflow-y: scroll;
+  max-height: 1080px;
 }
 
 .input > * {
