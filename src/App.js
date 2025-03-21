@@ -125,18 +125,15 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
       y: startPoint.y //TODO: radius
     }
   
-    const transitionEnd = {
-      x: endPoint.x,
-      y: endPoint.y //TODO: radius
-    }
+    const transitionEnd = transitionStart
 
-    
+    const urlString = transitionStart.x + "," + transitionStart.y
 
     return(
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
+      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
         <defs>
             <marker
-              id="arrow"
+              id={"arrow" + urlString} 
               viewBox="0 0 10 10"
               refX="5"
               refY="5"
@@ -146,8 +143,8 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
               <path d="M 0 0 L 10 5 L 0 10 z" />
             </marker>
         </defs>
-        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd="url(#arrow)"/>
-        <text fill={isFocused ? "red" : "#aaa"} x={transitionStart.x} y={transitionStart.y} textAnchor="middle">{
+        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"}/>
+        <text x={transitionStart.x} y={transitionStart.y} textAnchor="middle">{
           label.map(value => {
             return <tspan x={transitionStart.x + 125/2} dy='15'>{value}</tspan>
           })
@@ -167,11 +164,13 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
       y: endPoint.y//TODO: radius
     }
 
+    const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
+
     return(
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
+      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
           <defs>
             <marker
-              id="arrow"
+              id={"arrow" + urlString}
               viewBox="0 0 10 10"
               refX="5"
               refY="5"
@@ -181,9 +180,9 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
               <path d="M 0 0 L 10 5 L 0 10 z" />
             </marker>
           </defs>
-          <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 100) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
-          <text fill={isFocused ? "red" : "#aaa"} textAnchor="middle">
-            <textPath   href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
+          <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 100) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end={"url(#arrow" + urlString + ")"}/>
+          <text fill={isFocused ? "red" : "black"} textAnchor="middle">
+            <textPath   href={"#" + urlString} startOffset="50%">{
               label.map(element => {
                 return <tspan x='0' dy={15}>{element}</tspan>
               })}
@@ -205,11 +204,13 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
       y: endPoint.y - 50 * directionY//TODO: radius
     }
 
+    const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
+
     return(
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
+      <svg fill={isFocused ? "red" : "black"} pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
         <defs>
           <marker
-            id="arrow"
+            id={"arrow" + urlString} 
             viewBox="0 0 10 10"
             refX="5"
             refY="5"
@@ -219,9 +220,9 @@ const Transition = ({ startPoint, endPoint, label }) => { //TODO: tweak numbers
             <path d="M 0 0 L 10 5 L 0 10 z" />
           </marker>
         </defs>
-        <path id={'from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end="url(#arrow)"/>
-        <text fill={isFocused ? "red" : "#aaa"} textAnchor="middle">
-          <textPath href={'#from (' + transitionStart.x + ',' + transitionStart.y + ' to (' + transitionEnd.x + ',' + transitionEnd.y + ')'} startOffset="50%">{
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" marker-end={"url(#arrow" + urlString + ")"}/>
+        <text textAnchor="middle">
+          <textPath href={"#" + urlString} startOffset="50%">{
             label.map(element => {
               return <tspan x='0' dy={15}>{element}</tspan>
             })}
