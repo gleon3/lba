@@ -412,9 +412,4 @@ AB->BA
 /* example 1
 S->AB,
 AB->ab
-
-example 2
-S->A,
-B->a,
-AB->Ba
 */
