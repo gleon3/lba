@@ -268,6 +268,10 @@ export function grammar_to_lba(grammar){
     lba.add_state('z0')
     lba.add_transition('zs', 'z0', '< : <, R')
 
+    for(let symbol of grammar.terminals.concat(grammar.nonterminals).concat(['>', 'x'])){
+        lba.add_transition('z0', 'z0', symbol + ' : ' + symbol + ', R')
+    }
+
     for(const i of grammar.productions){
         if(i.right.length == 1){
             //for A->a or A->B replace current symbol with A
@@ -404,3 +408,13 @@ A->a,
 B->b,
 AB->BA
  */
+
+/* example 1
+S->AB,
+AB->ab
+
+example 2
+S->A,
+B->a,
+AB->Ba
+*/
