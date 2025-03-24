@@ -1,10 +1,39 @@
-import React, { useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: App.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: App.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useEffect } from "react";
 import { useState } from "react";
 import './App.css';
 import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_eliminate_x } from "./lba.js";
 
 /**
  * A component that displays a start state.
+ * @Component
  * 
  * @typedef {Object} StartStateProps
  * @property {Object} position - The x and y position of the state.
@@ -22,10 +51,10 @@ const StartState = ({ position, radius, name, transition_length }) => {
   }
 
   return(
-    <svg>
-      <State position={statePosition} radius={radius} name={name}></State>
-      <Transition startPoint={position} endPoint={statePosition} radius={radius} label={["start"]}></Transition>
-    </svg>
+    &lt;svg>
+      &lt;State position={statePosition} radius={radius} name={name}>&lt;/State>
+      &lt;Transition startPoint={position} endPoint={statePosition} radius={radius} label={["start"]}>&lt;/Transition>
+    &lt;/svg>
   )
 }
 
@@ -42,10 +71,10 @@ const StartState = ({ position, radius, name, transition_length }) => {
  */
 const State = ({ position, radius, name }) => {
   return(
-    <svg>
-      <circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
-      <text x={position.x} y={position.y} textAnchor="middle">{name}</text>
-    </svg>
+    &lt;svg>
+      &lt;circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
+      &lt;text x={position.x} y={position.y} textAnchor="middle">{name}&lt;/text>
+    &lt;/svg>
   )
 }
 
@@ -62,10 +91,10 @@ const State = ({ position, radius, name }) => {
  */
 const EndState = ({ position, radius, name }) => {
   return(
-    <svg>
-      <State position={position} radius={radius} name={name}></State>
-      <circle cx={position.x} cy={position.y} r={radius-5} fill="none" stroke="black" />
-    </svg>
+    &lt;svg>
+      &lt;State position={position} radius={radius} name={name}>&lt;/State>
+      &lt;circle cx={position.x} cy={position.y} r={radius-5} fill="none" stroke="black" />
+    &lt;/svg>
   )
 }
 
@@ -98,10 +127,10 @@ const ArrowHead = ({startPoint, endPoint, angle, arrowLength}) => {
   let by = - dirx * Math.sin(angle) + diry * Math.cos(angle)
   
   return(
-    <svg>
-      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*ax} y2={endPoint.y + arrowLength*ay} stroke="black" strokeWidth={3}></line>
-      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*bx} y2={endPoint.y + arrowLength*by} stroke="black" strokeWidth={3}></line>
-    </svg>
+    &lt;svg>
+      &lt;line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*ax} y2={endPoint.y + arrowLength*ay} stroke="black" strokeWidth={3}>&lt;/line>
+      &lt;line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*bx} y2={endPoint.y + arrowLength*by} stroke="black" strokeWidth={3}>&lt;/line>
+    &lt;/svg>
   )
 }
 
@@ -120,7 +149,7 @@ const ArrowHead = ({startPoint, endPoint, angle, arrowLength}) => {
 const Transition = ({ startPoint, endPoint, radius, label }) => {
   const [isFocused, setFocus] = useState(false);
 
-  if(startPoint.x == endPoint.x && startPoint.y == endPoint.y){ //self transition
+  if(startPoint.x == endPoint.x &amp;&amp; startPoint.y == endPoint.y){ //self transition
     const transitionStart = {
       x: startPoint.x + radius,
       y: startPoint.y
@@ -131,8 +160,8 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return(
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
-        <marker
+      &lt;svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
+        &lt;marker
             id={"arrow" + urlString} 
             viewBox="0 0 10 10"
             refX="5"
@@ -140,19 +169,19 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
             markerWidth="6"
             markerHeight="6"
             orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" />
-        </marker>
-        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"}/>
-        <text x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
+            &lt;path d="M 0 0 L 10 5 L 0 10 z" />
+        &lt;/marker>
+        &lt;path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"}/>
+        &lt;text x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
           label.map(value => {
-            return <tspan key={value} x={transitionStart.x + 2*radius} dy='13'>{value}</tspan>
+            return &lt;tspan key={value} x={transitionStart.x + 2*radius} dy='13'>{value}&lt;/tspan>
           })
         }
-        </text>
-      </svg>
+        &lt;/text>
+      &lt;/svg>
     )
   }
-  else if(startPoint.x == endPoint.x && startPoint.y >= endPoint.y){ //transition to earlier already drawn state on the same column
+  else if(startPoint.x == endPoint.x &amp;&amp; startPoint.y >= endPoint.y){ //transition to earlier already drawn state on the same column
     const transitionStart = {
       x: startPoint.x - radius,
       y: startPoint.y
@@ -166,8 +195,8 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return(
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
-          <marker
+      &lt;svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
+          &lt;marker
             id={"arrow" + urlString}
             viewBox="0 0 10 10"
             refX="5"
@@ -175,21 +204,21 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
             markerWidth="6"
             markerHeight="6"
             orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" />
-          </marker>
-          <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2*radius) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
-          <text fill={isFocused ? "red" : "black"} textAnchor="middle">
-            <textPath   href={"#" + urlString} startOffset="50%">{
+            &lt;path d="M 0 0 L 10 5 L 0 10 z" />
+          &lt;/marker>
+          &lt;path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2*radius) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
+          &lt;text fill={isFocused ? "red" : "black"} textAnchor="middle">
+            &lt;textPath   href={"#" + urlString} startOffset="50%">{
               label.map(element => {
-                return <tspan key={element} x='0' dy='15'>{element}</tspan>
+                return &lt;tspan key={element} x='0' dy='15'>{element}&lt;/tspan>
               })}
-            </textPath>
-          </text>
-        </svg>
+            &lt;/textPath>
+          &lt;/text>
+        &lt;/svg>
     )
   }else{
-    const directionX = (startPoint.x <= endPoint.x) ? 1 : -1
-    const directionY = (startPoint.y <= endPoint.y) ? 1 : -1
+    const directionX = (startPoint.x &lt;= endPoint.x) ? 1 : -1
+    const directionY = (startPoint.y &lt;= endPoint.y) ? 1 : -1
 
     const transitionStart = {
       x: startPoint.x,
@@ -204,8 +233,8 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return(
-      <svg fill={isFocused ? "red" : "black"} pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
-        <marker 
+      &lt;svg fill={isFocused ? "red" : "black"} pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
+        &lt;marker 
           id={"arrow" + urlString} 
           viewBox="0 0 10 10"
           refX="5"
@@ -213,17 +242,17 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
           markerWidth="6"
           markerHeight="6"
           orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z"/>
-        </marker>
-        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
-        <text textAnchor="middle">
-          <textPath href={"#" + urlString} startOffset="50%">{
+          &lt;path d="M 0 0 L 10 5 L 0 10 z"/>
+        &lt;/marker>
+        &lt;path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 &amp;&amp; directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
+        &lt;text textAnchor="middle">
+          &lt;textPath href={"#" + urlString} startOffset="50%">{
             label.map(element => {
-              return <tspan key={element} x='0' dy='15'>{element}</tspan>
+              return &lt;tspan key={element} x='0' dy='15'>{element}&lt;/tspan>
             })}
-          </textPath>
-        </text>
-      </svg>
+          &lt;/textPath>
+        &lt;/text>
+      &lt;/svg>
     )
   }
 }
@@ -241,7 +270,7 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
 
   function drawTransition(startState) {
 
-    if (height <= j * distanceY + (100 + 2 * radius)) {
+    if (height &lt;= j * distanceY + (100 + 2 * radius)) {
       height += distanceY
     }
 
@@ -260,7 +289,7 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
             }
 
             lbaGraph.push(
-              <Transition key={'self transition from state ' + startState + ' at ' + startPoint} startPoint={startPoint} endPoint={startPoint} radius={radius} label={v}></Transition>
+              &lt;Transition key={'self transition from state ' + startState + ' at ' + startPoint} startPoint={startPoint} endPoint={startPoint} radius={radius} label={v}>&lt;/Transition>
             )
 
           } else {
@@ -278,7 +307,7 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
               y: stateY*distanceY
             }
 
-            lbaGraph.push(<Transition key={'transition from state ' + startState + ' at ' + startPoint + ' to ' + endPoint} startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>)
+            lbaGraph.push(&lt;Transition key={'transition from state ' + startState + ' at ' + startPoint + ' to ' + endPoint} startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}>&lt;/Transition>)
           }
         } else {
           j += 1
@@ -295,17 +324,17 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
           
           if(key == lba.endStates){
             lbaGraph.push(
-              <svg key={'state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
-                <EndState position={endPoint} radius={radius} name={key}></EndState>
-                <Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>
-              </svg>
+              &lt;svg key={'state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
+                &lt;EndState position={endPoint} radius={radius} name={key}>&lt;/EndState>
+                &lt;Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}>&lt;/Transition>
+              &lt;/svg>
             )
           }else{
             lbaGraph.push(
-              <svg key={'end state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
-                <State position={endPoint} radius={radius} name={key}></State>
-                <Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>
-              </svg>
+              &lt;svg key={'end state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
+                &lt;State position={endPoint} radius={radius} name={key}>&lt;/State>
+                &lt;Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}>&lt;/Transition>
+              &lt;/svg>
             )
           }
           
@@ -320,7 +349,7 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
         }
 
       }
-      if (width < i * distanceX) {
+      if (width &lt; i * distanceX) {
         width += distanceX  
       }
       i = startX
@@ -335,12 +364,12 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
       y: 0,
     }
 
-    lbaGraph.push(<StartState key={'start state'} position={startPosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}></StartState>)
+    lbaGraph.push(&lt;StartState key={'start state'} position={startPosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}>&lt;/StartState>)
     alreadyDrawn.set(lba.startState, [1, 0])
     drawTransition(lba.startState)
   }
   return (
-    <svg width={width} height={height}>{lbaGraph}</svg>
+    &lt;svg width={width} height={height}>{lbaGraph}&lt;/svg>
   )
 }
 
@@ -424,43 +453,65 @@ function App() {
   }
 
   return (
-    <div>
-      <div className="menu gui-element">
-        <legend>Menu</legend>
-        <label>start:</label>
-        <textarea onChange={(e) => setStartValue(e.target.value)}></textarea>
-        <label>nonterminals:</label>
-        <textarea onChange={(e) => setNonterminalValue(e.target.value)}></textarea>
-        <label>terminals:</label>
-        <textarea onChange={(e) => setTerminalValue(e.target.value)}></textarea>
-        <label>productions:</label>
-        <textarea rows={5} onChange={(e) => setProductionValue(e.target.value)}></textarea>
-        <button onClick={handleSubmit}>submit</button>
-      </div>
-      <div className="grammar-info gui-element">
-        <legend>grammar-info</legend>
-        <pre>
+    &lt;div>
+      &lt;div className="menu gui-element">
+        &lt;legend>Menu&lt;/legend>
+        &lt;label>start:&lt;/label>
+        &lt;textarea onChange={(e) => setStartValue(e.target.value)}>&lt;/textarea>
+        &lt;label>nonterminals:&lt;/label>
+        &lt;textarea onChange={(e) => setNonterminalValue(e.target.value)}>&lt;/textarea>
+        &lt;label>terminals:&lt;/label>
+        &lt;textarea onChange={(e) => setTerminalValue(e.target.value)}>&lt;/textarea>
+        &lt;label>productions:&lt;/label>
+        &lt;textarea rows={5} onChange={(e) => setProductionValue(e.target.value)}>&lt;/textarea>
+        &lt;button onClick={handleSubmit}>submit&lt;/button>
+      &lt;/div>
+      &lt;div className="grammar-info gui-element">
+        &lt;legend>grammar-info&lt;/legend>
+        &lt;pre>
           {JSON.stringify(kurodaGrammar, null, 2)}
-        </pre>
-        <p>{kurodaGrammar.start}</p>
-        <p>add old grammar, is kuroda? if no add kuroda grammar if yes explain how it is already</p>
-      </div>
-      <div className="lba-info gui-element">
-        <legend>lba-info</legend>
-        <pre>
+        &lt;/pre>
+        &lt;p>{kurodaGrammar.start}&lt;/p>
+        &lt;p>add old grammar, is kuroda? if no add kuroda grammar if yes explain how it is already&lt;/p>
+      &lt;/div>
+      &lt;div className="lba-info gui-element">
+        &lt;legend>lba-info&lt;/legend>
+        &lt;pre>
           {JSON.stringify(lba, null, 2)}
-        </pre>
-        <label>M=</label>
-        <pre>
+        &lt;/pre>
+        &lt;label>M=&lt;/label>
+        &lt;pre>
           {JSON.stringify(eliminateX, null, 2)}
-        </pre>
-      </div>
-      <div className="LBA gui-element">
-        <legend>Linear Bounded Automaton</legend>
-        <LBA_Graph lba={lba} radius={50} distanceX={300} distanceY={300}></LBA_Graph>
-      </div>
-    </div>
+        &lt;/pre>
+      &lt;/div>
+      &lt;div className="LBA gui-element">
+        &lt;legend>Linear Bounded Automaton&lt;/legend>
+        &lt;LBA_Graph lba={lba} radius={50} distanceX={300} distanceY={300}>&lt;/LBA_Graph>
+      &lt;/div>
+    &lt;/div>
   );
 }
 
-export default App;
+export default App;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li></ul><h3>Global</h3><ul><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_x">lba_eliminate_x</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Mar 24 2025 16:32:52 GMT+0100 (Mitteleuropäische Normalzeit)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
