@@ -23,6 +23,11 @@
 
 .menu{
   text-align: center;
+  display: flex;
+}
+
+.menu>label{
+  padding: 1% 1%;
 }
 
 .grammar-info{

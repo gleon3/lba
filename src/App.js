@@ -7,24 +7,20 @@ import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_
  * A component that displays a start state.
  * 
  * @typedef {Object} StartStateProps
- * @property {Object} position - The x and y position of the state.
+ * @property {Object} startPosition - The x and y position of the start point of the transition going into the start state.
+ * @property {Object} statePosition - The x and y position of the start state.
  * @property {Number} radius - The radius of the outer circle of the state.
  * @property {String} name - The name of the state.
- * @property {Number} transition_length - The length of the transition to the start state.
  *
  * @param {StartStateProps} props
  * @returns {JSX.Element}
  */
-const StartState = ({ position, radius, name, transition_length }) => {
-  const statePosition = {
-    x: position.x,
-    y: position.y + transition_length,
-  }
+const StartState = ({ startPosition, statePosition, radius, name }) => {
 
   return(
     <svg>
       <State position={statePosition} radius={radius} name={name}></State>
-      <Transition startPoint={position} endPoint={statePosition} radius={radius} label={["start"]}></Transition>
+      <Transition startPoint={startPosition} endPoint={statePosition} radius={radius} label={["start"]}></Transition>
     </svg>
   )
 }
@@ -65,42 +61,6 @@ const EndState = ({ position, radius, name }) => {
     <svg>
       <State position={position} radius={radius} name={name}></State>
       <circle cx={position.x} cy={position.y} r={radius-5} fill="none" stroke="black" />
-    </svg>
-  )
-}
-
-/**
- * A component that displays the arrowhead of a transition.
- *
- * @typedef {Object} TransitionProps
- * @property {Object} startPoint - The x and y position of the state the transition starts at.
- * @property {Object} endPoint - The x and y position of the state the transition ends at.
- * @property {Number} angle - The angle of the arrow.
- * @property {Number} arrowLength - The length of the arrow.
- *
- * @param {TransitionProps} props
- * @returns {JSX.Element}
- */
-const ArrowHead = ({startPoint, endPoint, angle, arrowLength}) => {
-  let dirx = startPoint.x - endPoint.x
-  let diry = startPoint.y - endPoint.y
-
-  let dir_length = Math.sqrt(dirx*dirx+diry*diry)
-
-  //normalize
-  dirx = dirx/dir_length
-  diry = diry/dir_length
-
-  let ax = dirx * Math.cos(angle) - diry * Math.sin(angle)
-  let ay = dirx * Math.sin(angle) + diry * Math.cos(angle)
-          
-  let bx = dirx * Math.cos(angle) + diry * Math.sin(angle)
-  let by = - dirx * Math.sin(angle) + diry * Math.cos(angle)
-  
-  return(
-    <svg>
-      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*ax} y2={endPoint.y + arrowLength*ay} stroke="black" strokeWidth={3}></line>
-      <line x1={endPoint.x} y1={endPoint.y} x2={endPoint.x + arrowLength*bx} y2={endPoint.y + arrowLength*by} stroke="black" strokeWidth={3}></line>
     </svg>
   )
 }
@@ -340,7 +300,12 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
       y: 0,
     }
 
-    lbaGraph.push(<StartState key={'start state'} position={startPosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}></StartState>)
+    const startStatePosition = {
+      x: startPosition.x, 
+      y: startPosition.y + distanceY,
+    }
+
+    lbaGraph.push(<StartState key={'start state'} startPosition={startPosition} statePosition={startStatePosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}></StartState>)
     alreadyDrawn.set(lba.startState, [1, 0])
     drawTransition(lba.startState)
   }
@@ -377,11 +342,13 @@ function App() {
 
     setKurodaGrammar(kuroda_grammar)
 
-    setLBA(grammar_to_lba(kuroda_grammar))
-    setEliminateX(lba_eliminate_x(kuroda_grammar))
+    const createdLBA = grammar_to_lba(kuroda_grammar)
+    const eliminateXLBA = lba_eliminate_x(kuroda_grammar)
 
-    console.log("LBA delta: ", lba.delta)
-    console.log("M delta: ", eliminateX)
+    setLBA(createdLBA)
+    console.log("LBA delta: ", createdLBA.delta)
+    setEliminateX(eliminateXLBA)
+    console.log("M delta: ", eliminateXLBA)
   }
 
   function handleStartValue(startValue) {

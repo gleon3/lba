@@ -332,7 +332,7 @@ export function grammar_to_lba(grammar){
                     lba.add_transition(newState3 , newState3, symbol + ' : ' + symbol + ', L')
                 }
                 
-                lba.add_state('M')
+                //lba.add_state('M')
                 lba.add_transition(newState3 , 'M', '< : <, R')
 
                 lba.add_transition('M', 'z0', '< : <, R')
