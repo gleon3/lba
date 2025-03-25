@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import './App.css';
 import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_eliminate_x } from "./lba.js";
@@ -17,7 +17,7 @@ import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_
  */
 const StartState = ({ startPosition, statePosition, radius, name }) => {
 
-  return(
+  return (
     <svg>
       <State position={statePosition} radius={radius} name={name}></State>
       <Transition startPoint={startPosition} endPoint={statePosition} radius={radius} label={["start"]}></Transition>
@@ -37,7 +37,7 @@ const StartState = ({ startPosition, statePosition, radius, name }) => {
  * @returns {JSX.Element}
  */
 const State = ({ position, radius, name }) => {
-  return(
+  return (
     <svg>
       <circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
       <text x={position.x} y={position.y} textAnchor="middle">{name}</text>
@@ -57,10 +57,10 @@ const State = ({ position, radius, name }) => {
  * @returns {JSX.Element}
  */
 const EndState = ({ position, radius, name }) => {
-  return(
+  return (
     <svg>
       <State position={position} radius={radius} name={name}></State>
-      <circle cx={position.x} cy={position.y} r={radius-5} fill="none" stroke="black" />
+      <circle cx={position.x} cy={position.y} r={radius - 5} fill="none" stroke="black" />
     </svg>
   )
 }
@@ -80,44 +80,44 @@ const EndState = ({ position, radius, name }) => {
 const Transition = ({ startPoint, endPoint, radius, label }) => {
   const [isFocused, setFocus] = useState(false);
 
-  if(startPoint.x == endPoint.x && startPoint.y == endPoint.y){ //self transition
+  if (startPoint.x === endPoint.x && startPoint.y === endPoint.y) { //self transition
     const transitionStart = {
       x: startPoint.x + radius,
       y: startPoint.y
     }
-  
+
     const transitionEnd = transitionStart
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
-    return(
+    return (
       <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
         <marker
-            id={"arrow" + urlString} 
-            viewBox="0 0 10 10"
-            refX="5"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" />
+          id={"arrow" + urlString}
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
-        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"}/>
+        <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"} />
         <text x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
           label.map(value => {
-            return <tspan key={value} x={transitionStart.x + 2*radius} dy='13'>{value}</tspan>
+            return <tspan key={value} x={transitionStart.x + 2 * radius} dy='13'>{value}</tspan>
           })
         }
         </text>
       </svg>
     )
   }
-  else if(startPoint.x == endPoint.x && startPoint.y >= endPoint.y){ //transition to earlier already drawn state on the same column
+  else if (startPoint.x === endPoint.x && startPoint.y >= endPoint.y) { //transition to earlier already drawn state on the same column
     const transitionStart = {
       x: startPoint.x - radius,
       y: startPoint.y
     }
-  
+
     const transitionEnd = {
       x: endPoint.x - radius,
       y: endPoint.y
@@ -125,29 +125,29 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
-    return(
+    return (
       <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
-          <marker
-            id={"arrow" + urlString}
-            viewBox="0 0 10 10"
-            refX="5"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" />
-          </marker>
-          <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2*radius) + ' ' + ((transitionStart.y + transitionEnd.y)/2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
-          <text fill={isFocused ? "red" : "black"} textAnchor="middle">
-            <textPath   href={"#" + urlString} startOffset="50%">{
-              label.map(element => {
-                return <tspan key={element} x='0' dy='15'>{element}</tspan>
-              })}
-            </textPath>
-          </text>
-        </svg>
+        <marker
+          id={"arrow" + urlString}
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2 * radius) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
+        <text fill={isFocused ? "red" : "black"} textAnchor="middle">
+          <textPath href={"#" + urlString} startOffset="50%">{
+            label.map(element => {
+              return <tspan key={element} x='0' dy='15'>{element}</tspan>
+            })}
+          </textPath>
+        </text>
+      </svg>
     )
-  }else{
+  } else {
     const directionX = (startPoint.x <= endPoint.x) ? 1 : -1
     const directionY = (startPoint.y <= endPoint.y) ? 1 : -1
 
@@ -155,7 +155,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
       x: startPoint.x,
       y: startPoint.y + radius * directionY
     }
-  
+
     const transitionEnd = {
       x: endPoint.x,
       y: endPoint.y - radius * directionY
@@ -163,19 +163,19 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
-    return(
+    return (
       <svg fill={isFocused ? "red" : "black"} pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
-        <marker 
-          id={"arrow" + urlString} 
+        <marker
+          id={"arrow" + urlString}
           viewBox="0 0 10 10"
           refX="5"
           refY="5"
           markerWidth="6"
           markerHeight="6"
           orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z"/>
+          <path d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
-        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX == -1 && directionY == 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"}/>
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX === -1 && directionY === 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
         <text textAnchor="middle">
           <textPath href={"#" + urlString} startOffset="50%">{
             label.map(element => {
@@ -189,128 +189,179 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
 }
 
 //TOdo: rework
-const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
-  const lbaGraph = []
+const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
+  const lbaElements = []
   const alreadyDrawn = new Map()
 
-  let height = distanceY + 2*radius
+  const marginX = 2 * radius
+  const marginY = radius
+
+  let height = 0
   let width = 0
 
   let j = 0
-  let i = 1
+  let i = 0
+
 
   /**
-  * Draws the transitions and the following states for a given start state.
+  * Draws the all states recursively from a given start state.
   * 
-  * @param {String} startState - The state where the transition begins.
+  * @param {String} state - The start state.
   */
-  function drawTransition(startState) {
+  function drawStatesFromState(state) {
+    if (width < i * distanceX) {
+      width += distanceX
+    }
 
-    if (height <= j * distanceY + (100 + 2 * radius)) {
+    if (height < j * distanceY) {
       height += distanceY
     }
 
-    let transitions = lba.delta.get(startState)
+    const statePoint = {
+      x: i * distanceX + marginX,
+      y: j * distanceY + marginY,
+    }
 
-    if(transitions) {
-      let startX = alreadyDrawn.get(startState)[0]
-      let startY = alreadyDrawn.get(startState)[1] + 1
-      for (let [key, v] of transitions) {
-        if (alreadyDrawn.get(key)) {
-          if (startState == key) {
-            //self transition
-            const startPoint = {
-              x: i*distanceX,
-              y: distanceY +j * distanceY
-            }
+    if(state === lba.startState){
+      //start states have a transition built in, so they need extra space compared to normal states
+      j += 1
+      height += distanceY
+      
+      const startPoint = statePoint
 
-            lbaGraph.push(
-              <Transition key={'self transition from state ' + startState + ' at ' + startPoint} startPoint={startPoint} endPoint={startPoint} radius={radius} label={v}></Transition>
-            )
+      const startStatePoint = {
+        x: statePoint.x,
+        y: statePoint.y + distanceY,
+      }
 
-          } else {
-            //transition to state that already has been drawn
-            let stateX = alreadyDrawn.get(key)[0]
-            let stateY = alreadyDrawn.get(key)[1] + 1
+      lbaElements.push(
+        <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
+      )
+    }
+    else if (lba.endStates.includes(state)) {
+      lbaElements.push(
+        <EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}></EndState>
+      )
+    } else {
+      lbaElements.push(
+        <State key={'state ' + state} position={statePoint} radius={radius} name={state}></State>
+      )
+    }
 
-            const startPoint = {
-              x: i*distanceX,
-              y: distanceY + j*distanceY,
-            }
+    if (!alreadyDrawn.get(state)) {
+      alreadyDrawn.set(state, [i, j])
+    }
 
-            const endPoint = {
-              x: stateX*distanceX,
-              y: stateY*distanceY
-            }
+    const transitions = lba.delta.get(state)
 
-            lbaGraph.push(<Transition key={'transition from state ' + startState + ' at ' + startPoint + ' to ' + endPoint} startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>)
-          }
-        } else {
-          j += 1
+    //there are no more states to draw for this iteration, so exit the function early and do nothing
+    if (!transitions)
+      return
+
+    const startX = alreadyDrawn.get(state)[0]
+    for (let newState of transitions.keys()) {
+      if (!alreadyDrawn.get(newState)) {
+        j ++
+        drawStatesFromState(newState)
+        j--
+        i++
+      }
+
+    }
+    i = startX
+  }
+
+  /**
+  * Draws all transitions from a recursively from a given state.
+  * 
+  * @param {String} state - The state.
+  */
+  function drawTransitions(state) {
+    if (alreadyDrawn.get(state)) {
+      const stateX = alreadyDrawn.get(state)[0]
+      const stateY = alreadyDrawn.get(state)[1]
+
+
+      const transitions = lba.delta.get(state)
+
+      //there are no transitions for the given state, so exit the function early and do nothing
+      if (!transitions)
+        return
+
+      for (let [toState, label] of transitions) {
+        if (alreadyDrawn.get(toState)) {
+          const toStateX = alreadyDrawn.get(toState)[0]
+          const toStateY = alreadyDrawn.get(toState)[1]
 
           const startPoint = {
-            x: startX*distanceX,
-            y: startY * distanceY
+            x: stateX * distanceX + marginX,
+            y: stateY * distanceY + marginY,
           }
-          
+
           const endPoint = {
-            x: i * distanceX,
-            y: distanceY + j * distanceY,
-          }
-          
-          if(key == lba.endStates){
-            lbaGraph.push(
-              <svg key={'state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
-                <EndState position={endPoint} radius={radius} name={key}></EndState>
-                <Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>
-              </svg>
-            )
-          }else{
-            lbaGraph.push(
-              <svg key={'end state ' + key  + ' from ' + startPoint + ' to ' + endPoint}>
-                <State position={endPoint} radius={radius} name={key}></State>
-                <Transition startPoint={startPoint} endPoint={endPoint} radius={radius} label={v}></Transition>
-              </svg>
-            )
-          }
-          
-
-          if (!alreadyDrawn.get(key)) {
-            alreadyDrawn.set(key, [i, j])
+            x: toStateX * distanceX + marginX,
+            y: toStateY * distanceY + marginY
           }
 
-          drawTransition(key)
-          i += 1
-          j -= 1
+          lbaElements.push(<Transition key={'Transition from state ' + state + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
+        } else {
+          throw new Error("Trying to draw a transition to a state that hasnt been drawn yet!")
         }
+      }
 
-      }
-      if (width < i * distanceX) {
-        width += distanceX  
-      }
-      i = startX
+    } else {
+      throw new Error("Trying to draw transitions from a state that hasnt been drawn yet!")
     }
+  }
+
+
+  /**
+  * Draws a list of states in a row next to each other.
+  * 
+  * @param {String[]} states - The list of states that are drawn.
+  * @param {Number} row - The index of the row the states are drawn in.
+  */
+  function drawStates(states, row) {
+    let count = 1
+    for (let state of states) {
+      const statePosition = {
+        x: count * distanceX,
+        y: row * distanceY
+      }
+
+      if (!alreadyDrawn.get(state)) {
+        alreadyDrawn.set(state, [count, row - 1])
+      }
+
+      lbaElements.push(
+        <State position={statePosition} radius={radius} name={state}></State>
+      )
+      count++
+      width += distanceX
+    }
+    height += row * distanceY
+    j += 1
   }
 
 
   if (lba) {
-    const stateRadius = 50
-    const startPosition = {
-      x: distanceX, 
-      y: 0,
+    //alreadyDrawn.set(lba.startState, [0, j])
+
+    drawStatesFromState(lba.startState)
+
+    for (const state of lba.states) {
+      drawTransitions(state)
     }
 
-    const startStatePosition = {
-      x: startPosition.x, 
-      y: startPosition.y + distanceY,
-    }
+    width += radius + marginX * 2
+    height += radius + marginY * 2
 
-    lbaGraph.push(<StartState key={'start state'} startPosition={startPosition} statePosition={startStatePosition} radius={stateRadius} name={lba.startState} transition_length={distanceY}></StartState>)
-    alreadyDrawn.set(lba.startState, [1, 0])
-    drawTransition(lba.startState)
+    //drawTransition(lba.startState)
   }
   return (
-    <svg width={width} height={height}>{lbaGraph}</svg>
+    <svg width={width} height={height}>
+      {lbaElements}
+    </svg>
   )
 }
 
@@ -399,26 +450,26 @@ function App() {
       <div className="grammar-info gui-element">
         <legend>input-info</legend>
         {(grammar) && (
-        <div>
-          <p>{"nonterminals: " +  grammar.nonterminals.join(", ")}</p>
-          <p>{"terminals: " +  grammar.terminals.join(", ")}</p>
-          <p>{"start symbol: " + grammar.start}</p>
-          <p>{"productions: " +  grammar.productions.join(", ")}</p>
-        </div>
+          <div>
+            <p>{"nonterminals: " + grammar.nonterminals.join(", ")}</p>
+            <p>{"terminals: " + grammar.terminals.join(", ")}</p>
+            <p>{"start symbol: " + grammar.start}</p>
+            <p>{"productions: " + grammar.productions.join(", ")}</p>
+          </div>
         )}
       </div>
       <div className="grammar-info gui-element">
         <legend>grammar-info</legend>
-        <p>{grammar ? (grammar == kurodaGrammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.") : "" }</p>
-        {(grammar != kurodaGrammar) && (
-             <div>
-              <p>{"nonterminals: " + kurodaGrammar.nonterminals.join(", ")}</p>
-              <p>{"terminals: " + kurodaGrammar.terminals.join(", ")}</p>
-              <p>{"start symbol: " + kurodaGrammar.start}</p>
-              <p>{"productions: " + kurodaGrammar.productions.join(", ")}</p>
-           </div>
-         )}
-        
+        <p>{grammar ? (grammar === kurodaGrammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.") : ""}</p>
+        {(grammar !== kurodaGrammar) && (
+          <div>
+            <p>{"nonterminals: " + kurodaGrammar.nonterminals.join(", ")}</p>
+            <p>{"terminals: " + kurodaGrammar.terminals.join(", ")}</p>
+            <p>{"start symbol: " + kurodaGrammar.start}</p>
+            <p>{"productions: " + kurodaGrammar.productions.join(", ")}</p>
+          </div>
+        )}
+
       </div>
       <div className="lba-info gui-element">
         <legend>lba-info</legend>
@@ -427,19 +478,25 @@ function App() {
             <p>{"states: " + lba.states.join(", ")}</p>
             <p>{"alphabet: " + lba.inputAlphabet.join(", ")}</p>
             <p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}</p>
-            <p>{"delta: to view delta check the console"}</p>
-            <p>{"start state: " + lba.startState }</p>
-            <p>{"blank symbol: " + lba.blank }</p>
-            <p>{"end states: " + lba.endStates.join(", ") }</p>
+            <p>{"delta: to view delta check the browser console"}</p>
+            <p>{"start state: " + lba.startState}</p>
+            <p>{"blank symbol: " + lba.blank}</p>
+            <p>{"end states: " + lba.endStates.join(", ")}</p>
             <br></br>
-            <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check console to view the delta of M" }</p>
+            <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>
           </div>
         )}
       </div>
       <div className="LBA gui-element">
         <legend>Linear Bounded Automaton</legend>
         {(lba) && (
-        <LBA_Graph lba={lba} radius={50} distanceX={300} distanceY={300}></LBA_Graph>
+          <LbaGraph lba={lba} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+        )}
+      </div>
+      <div className="LBA gui-element">
+        <legend>M</legend>
+        {(eliminateX) && (
+          <LbaGraph lba={eliminateX} radius={50} distanceX={300} distanceY={300}></LbaGraph>
         )}
       </div>
     </div>

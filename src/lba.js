@@ -16,7 +16,6 @@ export class Production{
      * @return {String} The production as a String.
      */
     toString(){
-
         return this.left.join(" ") + "->" + this.right.join(" ")
     }
 }
@@ -118,9 +117,9 @@ export class LBA{
  */
 export function is_kuroda(grammar){
     for(let production of grammar.productions){
-        if((production.left.length == 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length == 1) ||
-            (production.left.length == 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length == 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1])) ||
-            (production.left.length == 2 && grammar.nonterminals.includes(production.left[0]) && grammar.nonterminals.includes(production.left[1]) && production.right.length == 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1]))) {
+        if((production.left.length === 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length === 1) ||
+            (production.left.length === 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length === 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1])) ||
+            (production.left.length === 2 && grammar.nonterminals.includes(production.left[0]) && grammar.nonterminals.includes(production.left[1]) && production.right.length === 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1]))) {
             //pass
         }else{
             return false
@@ -148,14 +147,14 @@ export function convert_to_kuroda(inputGrammar){
         for(let j = 0; j < grammar.productions.length; j++){
             //replace nonterminal in left side of production
             for(let k = 0; k < grammar.productions[j].left.length; k++){
-                if(grammar.productions[j].left[k] == old_symbol){
+                if(grammar.productions[j].left[k] === old_symbol){
                     grammar.productions[j].left[k] = new_variable
                 }
             }
             
             //replace nonterminal in right side of production
             for(let k = 0; k < grammar.productions[j].right.length; k++){
-                if(grammar.productions[j].right[k] == old_symbol){
+                if(grammar.productions[j].right[k] === old_symbol){
                     grammar.productions[j].right[k] = new_variable
                 }
             }
@@ -169,7 +168,7 @@ export function convert_to_kuroda(inputGrammar){
     for(let i = 0; i < grammar.productions.length; i++){
         const n = grammar.productions[i].right.length 
 
-        if(grammar.productions[i].left.length == 1 && n > 2){
+        if(grammar.productions[i].left.length === 1 && n > 2){
             //new variables C1..CN-2, replace Productions A -> B1..BN with A->B1C1..Ci->Bi+1Ci+1
             //A->B1C1
             grammar.productions.push(new Production(grammar.productions[i].left, [grammar.productions[i].right[0], "C" + index.toString()]))
@@ -222,7 +221,7 @@ export function convert_to_kuroda(inputGrammar){
     for(let i = 0; i < grammar.productions.length; i++){
         const n = grammar.productions[i].left.length
 
-        if(grammar.productions[i].right.length == n + 1 && n >= 2){
+        if(grammar.productions[i].right.length === n + 1 && n >= 2){
             //new Variables D2..Dn
 
             //A1A2->B1D2
@@ -246,7 +245,7 @@ export function convert_to_kuroda(inputGrammar){
         const n = grammar.productions[i].right.length
         const m = grammar.productions[i].left.length
 
-        if(m == n && n > 2){
+        if(m === n && n > 2){
              //new Variables D2..Dn-1
 
             //A1A2->B1D2
@@ -258,7 +257,6 @@ export function convert_to_kuroda(inputGrammar){
             }
 
             //Dn-1An->Bn-1Bn
-            n = grammar.productions[i].right.length
             grammar.productions.push(new Production(["D" + (n - 2).toString(), grammar.productions[i].left[n-1]], [grammar.productions[i].right[n-2], grammar.productions[i].right[n-1]]))
 
             //remove replaced production
@@ -286,7 +284,7 @@ export function grammar_to_lba(grammar){
     }
 
     for(const i of grammar.productions){
-        if(i.right.length == 1){
+        if(i.right.length === 1){
             //for A->a or A->B replace current symbol with A
             //(z,a) -> (z,A,R)
             //(z,B) -> (z,B,R)
@@ -300,8 +298,8 @@ export function grammar_to_lba(grammar){
             }
 
             lba.add_transition(newState, 'z0', '< : <, R')
-        } else if(i.right.length == 2){
-            if(i.left.length == 2){
+        } else if(i.right.length === 2){
+            if(i.left.length === 2){
                 
                 //for AB->CD, write B, change head to left, write A 
                 //(z,C) -> (z,A,R)
@@ -318,7 +316,7 @@ export function grammar_to_lba(grammar){
 
                 lba.add_transition(newState2, 'z0', '< : <, R')
                 
-            }else if(i.left.length == 1){
+            }else if(i.left.length === 1){
                 const newState1 = lba.add_state()
                 lba.add_transition('z0', newState1, i.right[0] + ' : ' + i.right[0] + ', R')
                 
@@ -363,22 +361,22 @@ export function grammar_to_lba(grammar){
  * @return {lba} A linear bounded automaton that overwrites the blank symbol.
  */
 export function lba_eliminate_x(grammar){
-    let throwaway = new LBA(grammar, 'zi', '<', '>', 'x')
+    let TM = new LBA(grammar, 'zi', '<', '>', 'x')
 
     for(let symbol of grammar.terminals.concat(grammar.nonterminals)){
-        const newStateSymbol = throwaway.add_state(symbol)
-        throwaway.add_transition('zi', newStateSymbol, symbol + ' : <, R')
+        const newStateSymbol = TM.add_state(symbol)
+        TM.add_transition('zi', newStateSymbol, symbol + ' : <, R')
 
         for(let innerSymbol of grammar.terminals.concat(grammar.nonterminals)){
-            throwaway.add_transition(symbol, innerSymbol ,innerSymbol + ' : ' + symbol + ', R')
+            TM.add_transition(symbol, innerSymbol ,innerSymbol + ' : ' + symbol + ', R')
         }
 
-        throwaway.add_transition(newStateSymbol, 'zo', 'x : ' + symbol + ', L')
+        TM.add_transition(newStateSymbol, 'zo', 'x : ' + symbol + ', L')
     }
 
     //lba.add_transition(newState, 'z0', '< : <, R')
 
-    return throwaway.delta
+    return TM
 }
 /*
 const nonterminals = ['S', 'B']
