@@ -239,6 +239,11 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
   let j = 0
   let i = 1
 
+  /**
+  * Draws the transitions and the following states for a given start state.
+  * 
+  * @param {String} startState - The state where the transition begins.
+  */
   function drawTransition(startState) {
 
     if (height <= j * distanceY + (100 + 2 * radius)) {
@@ -344,7 +349,6 @@ const LBA_Graph = ({ lba, radius, distanceY, distanceX }) => {
   )
 }
 
-//TOdo: rework
 function App() {
   const [startValue, setStartValue] = useState('')
   const [nonterminalValue, setNonterminalValue] = useState('')
@@ -354,6 +358,7 @@ function App() {
   const [lba, setLBA] = useState('')
   const [eliminateX, setEliminateX] = useState('')
 
+  const [grammar, setGrammar] = useState('')
   const [kurodaGrammar, setKurodaGrammar] = useState('')
 
   function handleSubmit(e) {
@@ -365,31 +370,18 @@ function App() {
 
     productions = handleProductions(productions)
 
-    let grammar = new Grammar(nonterminals, terminals, productions, startValue)
+    const grammar = new Grammar(nonterminals, terminals, productions, startValue)
+    setGrammar(grammar)
 
-    console.log(grammar)
-
-    console.log('old grammar:')
-    for (let production of productions) {
-      console.log(production.left + " -> " + production.right)
-    }
-
-    let kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
+    const kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
 
     setKurodaGrammar(kuroda_grammar)
 
-    console.log('\nnew grammar:')
-    for (let production of kuroda_grammar.productions) {
-      console.log(production.left + " -> " + production.right)
-    }
-
     setLBA(grammar_to_lba(kuroda_grammar))
     setEliminateX(lba_eliminate_x(kuroda_grammar))
-    
 
-
-    console.log(lba.delta)
-    console.log('M = ', eliminateX)
+    console.log("LBA delta: ", lba.delta)
+    console.log("M delta: ", eliminateX)
   }
 
   function handleStartValue(startValue) {
@@ -438,26 +430,50 @@ function App() {
         <button onClick={handleSubmit}>submit</button>
       </div>
       <div className="grammar-info gui-element">
+        <legend>input-info</legend>
+        {(grammar) && (
+        <div>
+          <p>{"nonterminals: " +  grammar.nonterminals.join(", ")}</p>
+          <p>{"terminals: " +  grammar.terminals.join(", ")}</p>
+          <p>{"start symbol: " + grammar.start}</p>
+          <p>{"productions: " +  grammar.productions.join(", ")}</p>
+        </div>
+        )}
+      </div>
+      <div className="grammar-info gui-element">
         <legend>grammar-info</legend>
-        <pre>
-          {JSON.stringify(kurodaGrammar, null, 2)}
-        </pre>
-        <p>{kurodaGrammar.start}</p>
-        <p>add old grammar, is kuroda? if no add kuroda grammar if yes explain how it is already</p>
+        <p>{grammar ? (grammar == kurodaGrammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.") : "" }</p>
+        {(grammar != kurodaGrammar) && (
+             <div>
+              <p>{"nonterminals: " + kurodaGrammar.nonterminals.join(", ")}</p>
+              <p>{"terminals: " + kurodaGrammar.terminals.join(", ")}</p>
+              <p>{"start symbol: " + kurodaGrammar.start}</p>
+              <p>{"productions: " + kurodaGrammar.productions.join(", ")}</p>
+           </div>
+         )}
+        
       </div>
       <div className="lba-info gui-element">
         <legend>lba-info</legend>
-        <pre>
-          {JSON.stringify(lba, null, 2)}
-        </pre>
-        <label>M=</label>
-        <pre>
-          {JSON.stringify(eliminateX, null, 2)}
-        </pre>
+        {(lba) && (
+          <div>
+            <p>{"states: " + lba.states.join(", ")}</p>
+            <p>{"alphabet: " + lba.inputAlphabet.join(", ")}</p>
+            <p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}</p>
+            <p>{"delta: to view delta check the console"}</p>
+            <p>{"start state: " + lba.startState }</p>
+            <p>{"blank symbol: " + lba.blank }</p>
+            <p>{"end states: " + lba.endStates.join(", ") }</p>
+            <br></br>
+            <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check console to view the delta of M" }</p>
+          </div>
+        )}
       </div>
       <div className="LBA gui-element">
         <legend>Linear Bounded Automaton</legend>
+        {(lba) && (
         <LBA_Graph lba={lba} radius={50} distanceX={300} distanceY={300}></LBA_Graph>
+        )}
       </div>
     </div>
   );

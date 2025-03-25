@@ -35,6 +35,10 @@
   max-height: 270px;
 }
 
+.info-text{
+  display: flex;
+}
+
 .LBA{
   overflow-x: scroll;
   overflow-y: scroll;

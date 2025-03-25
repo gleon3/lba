@@ -9,6 +9,16 @@ export class Production{
         this.left = left
         this.right = right
     }
+
+    /**
+     * Returns a String that shows the production.
+     * 
+     * @return {String} The production as a String.
+     */
+    toString(){
+
+        return this.left.join(" ") + "->" + this.right.join(" ")
+    }
 }
 
 /** Class representing a grammar. */
@@ -121,10 +131,13 @@ export function is_kuroda(grammar){
 
 /**
  * Converts the given type 1 grammar to kuroda normalform.
- * @param {Grammar} grammar - A type 1 grammar.
+ * @param {Grammar} inputGrammar - A type 1 grammar.
  * @return {grammar} The type 1 grammar in kuroda normalform.
  */
-export function convert_to_kuroda(grammar){
+export function convert_to_kuroda(inputGrammar){
+    //make a copy of the grammar object to not edit the input grammars parameters
+    let grammar = new Grammar(Array.from(inputGrammar.nonterminals), Array.from(inputGrammar.terminals), Array.from(inputGrammar.productions), inputGrammar.start)
+
     //seperate terminals
     for(let i = 0; i < grammar.terminals.length; i++){
         let old_symbol = grammar.terminals[i]
@@ -318,7 +331,8 @@ export function grammar_to_lba(grammar){
                 for(let symbol of grammar.terminals.concat(grammar.nonterminals).concat(['>', 'x'])){
                     lba.add_transition(newState3 , newState3, symbol + ' : ' + symbol + ', L')
                 }
-
+                
+                lba.add_state('M')
                 lba.add_transition(newState3 , 'M', '< : <, R')
 
                 lba.add_transition('M', 'z0', '< : <, R')
