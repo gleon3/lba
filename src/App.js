@@ -80,8 +80,10 @@ const EndState = ({ position, radius, name }) => {
 const Transition = ({ startPoint, endPoint, radius, label }) => {
   const [isFocused, setFocus] = useState(false)
 
-  function handleMouseOver(id){
-    var target = document.getElementById('svg ' + id)
+  let elementRef = React.createRef();
+
+  function handleMouseOver(){
+    var target = elementRef.current
 
     var parent = target.ownerSVGElement
 
@@ -105,7 +107,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
+      <svg ref={elementRef} pointerEvents="stroke" onMouseOver={() => handleMouseOver()} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
@@ -140,7 +142,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
+      <svg ref={elementRef} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
@@ -178,7 +180,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
+      <svg ref={elementRef} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
