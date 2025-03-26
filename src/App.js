@@ -78,7 +78,21 @@ const EndState = ({ position, radius, name }) => {
  * @returns {JSX.Element}
  */
 const Transition = ({ startPoint, endPoint, radius, label }) => {
-  const [isFocused, setFocus] = useState(false);
+  const [isFocused, setFocus] = useState(false)
+
+  function handleMouseOver(id){
+    var target = document.getElementById('svg ' + id)
+
+    var parent = target.ownerSVGElement
+
+    parent.appendChild(target)
+
+    setFocus(true)
+  }
+
+  function handleMouseLeave(){
+    setFocus(false)
+  }
 
   if (startPoint.x === endPoint.x && startPoint.y === endPoint.y) { //self transition
     const transitionStart = {
@@ -91,7 +105,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
+      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
@@ -100,10 +114,10 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
           markerWidth="6"
           markerHeight="6"
           orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" />
+          <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
         <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"} />
-        <text x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
+        <text fill={isFocused ? "red" : "black"} x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
           label.map(value => {
             return <tspan key={value} x={transitionStart.x + 2 * radius} dy='13'>{value}</tspan>
           })
@@ -126,7 +140,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)} fill={isFocused ? "red" : "black"}>
+      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
@@ -135,7 +149,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
           markerWidth="6"
           markerHeight="6"
           orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" />
+          <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
         <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2 * radius) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
         <text fill={isFocused ? "red" : "black"} textAnchor="middle">
@@ -164,7 +178,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
     return (
-      <svg fill={isFocused ? "red" : "black"} pointerEvents="stroke" onMouseOver={() => setFocus(true)} onMouseLeave={() => setFocus(false)}>
+      <svg id={'svg ' + urlString} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
         <marker
           id={"arrow" + urlString}
           viewBox="0 0 10 10"
@@ -173,10 +187,10 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
           markerWidth="6"
           markerHeight="6"
           orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" />
+          <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
         <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((directionX === -1 && directionY === 1) ? (transitionStart.x + ' ' + transitionEnd.y) : (transitionEnd.x + ' ' + transitionStart.y)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
-        <text textAnchor="middle">
+        <text fill={isFocused ? "red" : "black"} textAnchor="middle">
           <textPath href={"#" + urlString} startOffset="50%">{
             label.map(element => {
               return <tspan key={element} x='0' dy='15'>{element}</tspan>
@@ -189,7 +203,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
 }
 
 //TOdo: rework
-const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -221,11 +235,11 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
       y: row * distanceY + marginY,
     }
 
-    if(state === lba.startState){
+    if (state === lba.startState) {
       //start states have a transition built in, so they need extra space compared to normal states
       row += 1
       height += distanceY
-      
+
       const startPoint = statePoint
 
       const startStatePoint = {
@@ -248,13 +262,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
     }
 
     if (!alreadyDrawn.get(state)) {
-
-      
       alreadyDrawn.set(state, [col, row])
-      if(state == "M"){
-        console.log("M", col, row)
-        console.log(alreadyDrawn.get('M'))
-      }
     }
 
     const transitions = lba.delta.get(state)
@@ -266,7 +274,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
     const stateCol = alreadyDrawn.get(state)[0]
     for (let newState of transitions.keys()) {
       if (!alreadyDrawn.get(newState)) {
-        row ++
+        row++
         drawStatesFromState(newState)
         row--
         col++
@@ -364,7 +372,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
     //drawTransition(lba.startState)
   }
   return (
-    <svg width={width} height={height}>
+    <svg id="svgParent" className="svg" width={width} height={height}>
       {lbaElements}
     </svg>
   )
@@ -399,7 +407,8 @@ function App() {
 
 
     const createdLBA = grammar_to_lba(kuroda_grammar)
-    console.log(createdLBA)
+    console.log("LBA", createdLBA.LBA)
+    console.log("M", createdLBA.M)
 
     setLBA(createdLBA.LBA)
     setEliminateX(createdLBA.M)
