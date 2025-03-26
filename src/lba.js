@@ -275,6 +275,7 @@ export function convert_to_kuroda(inputGrammar){
  */
 export function grammar_to_lba(grammar){
     const lba = new LBA(grammar, 'zs', '<', '>', 'x')
+    let eliminateX 
 
     lba.add_state('z0')
     lba.add_transition('zs', 'z0', '< : <, R')
@@ -330,7 +331,8 @@ export function grammar_to_lba(grammar){
                     lba.add_transition(newState3 , newState3, symbol + ' : ' + symbol + ', L')
                 }
                 
-                //lba.add_state('M')
+                eliminateX = lba_eliminate_x(grammar)
+
                 lba.add_transition(newState3 , 'M', '< : <, R')
 
                 lba.add_transition('M', 'z0', '< : <, R')
@@ -351,8 +353,15 @@ export function grammar_to_lba(grammar){
     const newState3 = lba.add_state()
     lba.add_endState(newState3)
     lba.add_transition(newState2, newState3, '< : <, N')
+
+    if(eliminateX){
+        lba.add_state('M')
+    }
     
-    return lba
+    return {
+        LBA: lba, 
+        M: eliminateX
+    }
 }
 
 /**

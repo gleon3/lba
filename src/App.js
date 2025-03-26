@@ -189,19 +189,18 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
 }
 
 //TOdo: rework
-const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX}) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
-  const marginX = 2 * radius
+  const marginX = 200
   const marginY = radius
 
   let height = 0
   let width = 0
 
-  let j = 0
-  let i = 0
-
+  let row = 0
+  let col = 0
 
   /**
   * Draws the all states recursively from a given start state.
@@ -209,22 +208,22 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   * @param {String} state - The start state.
   */
   function drawStatesFromState(state) {
-    if (width < i * distanceX) {
+    if (width < col * distanceX) {
       width += distanceX
     }
 
-    if (height < j * distanceY) {
+    if (height < row * distanceY) {
       height += distanceY
     }
 
     const statePoint = {
-      x: i * distanceX + marginX,
-      y: j * distanceY + marginY,
+      x: col * distanceX + marginX,
+      y: row * distanceY + marginY,
     }
 
     if(state === lba.startState){
       //start states have a transition built in, so they need extra space compared to normal states
-      j += 1
+      row += 1
       height += distanceY
       
       const startPoint = statePoint
@@ -249,7 +248,13 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
     }
 
     if (!alreadyDrawn.get(state)) {
-      alreadyDrawn.set(state, [i, j])
+
+      
+      alreadyDrawn.set(state, [col, row])
+      if(state == "M"){
+        console.log("M", col, row)
+        console.log(alreadyDrawn.get('M'))
+      }
     }
 
     const transitions = lba.delta.get(state)
@@ -258,17 +263,17 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
     if (!transitions)
       return
 
-    const startX = alreadyDrawn.get(state)[0]
+    const stateCol = alreadyDrawn.get(state)[0]
     for (let newState of transitions.keys()) {
       if (!alreadyDrawn.get(newState)) {
-        j ++
+        row ++
         drawStatesFromState(newState)
-        j--
-        i++
+        row--
+        col++
       }
 
     }
-    i = startX
+    col = stateCol
   }
 
   /**
@@ -278,8 +283,8 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   */
   function drawTransitions(state) {
     if (alreadyDrawn.get(state)) {
-      const stateX = alreadyDrawn.get(state)[0]
-      const stateY = alreadyDrawn.get(state)[1]
+      const stateCol = alreadyDrawn.get(state)[0]
+      const stateRow = alreadyDrawn.get(state)[1]
 
 
       const transitions = lba.delta.get(state)
@@ -290,17 +295,17 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
 
       for (let [toState, label] of transitions) {
         if (alreadyDrawn.get(toState)) {
-          const toStateX = alreadyDrawn.get(toState)[0]
-          const toStateY = alreadyDrawn.get(toState)[1]
+          const toStateCol = alreadyDrawn.get(toState)[0]
+          const toStateRow = alreadyDrawn.get(toState)[1]
 
           const startPoint = {
-            x: stateX * distanceX + marginX,
-            y: stateY * distanceY + marginY,
+            x: stateCol * distanceX + marginX,
+            y: stateRow * distanceY + marginY,
           }
 
           const endPoint = {
-            x: toStateX * distanceX + marginX,
-            y: toStateY * distanceY + marginY
+            x: toStateCol * distanceX + marginX,
+            y: toStateRow * distanceY + marginY
           }
 
           lbaElements.push(<Transition key={'Transition from state ' + state + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
@@ -310,7 +315,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       }
 
     } else {
-      throw new Error("Trying to draw transitions from a state that hasnt been drawn yet!")
+      throw new Error("Trying to draw transitions from a state that hasnt been drawn yet!" + state)
     }
   }
 
@@ -340,7 +345,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       width += distanceX
     }
     height += row * distanceY
-    j += 1
+    row += 1
   }
 
 
@@ -390,16 +395,14 @@ function App() {
     setGrammar(grammar)
 
     const kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
-
     setKurodaGrammar(kuroda_grammar)
 
-    const createdLBA = grammar_to_lba(kuroda_grammar)
-    const eliminateXLBA = lba_eliminate_x(kuroda_grammar)
 
-    setLBA(createdLBA)
-    console.log("LBA delta: ", createdLBA.delta)
-    setEliminateX(eliminateXLBA)
-    console.log("M delta: ", eliminateXLBA)
+    const createdLBA = grammar_to_lba(kuroda_grammar)
+    console.log(createdLBA)
+
+    setLBA(createdLBA.LBA)
+    setEliminateX(createdLBA.M)
   }
 
   function handleStartValue(startValue) {
