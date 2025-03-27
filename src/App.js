@@ -406,7 +406,7 @@ function App() {
   const [productionValue, setProductionValue] = useState('')
 
   const [lba, setLBA] = useState('')
-  const [eliminateX, setEliminateX] = useState('')
+  const [eliminateBlank, setEliminateBlank] = useState('')
 
   const [inputGrammar, setInputGrammar] = useState('')
   const [output, setOutput] = useState('')
@@ -429,7 +429,9 @@ function App() {
       console.log("M", createdLBA.M)
 
       setLBA(createdLBA.LBA)
-      setEliminateX(createdLBA.M)
+      setEliminateBlank(createdLBA.M)
+
+      console.log(kuroda_grammar.steps)
 
       setOutput(kuroda_grammar)
     } else {
@@ -440,10 +442,12 @@ function App() {
 
       const createdLBA = grammar_to_lba(grammarObject.grammar)
       console.log("LBA", createdLBA.LBA)
-      console.log("M", createdLBA.M)
+      if(createdLBA.M){
+        console.log("M", createdLBA.M)
+      }
 
       setLBA(createdLBA.LBA)
-      setEliminateX(createdLBA.M)
+      setEliminateBlank(createdLBA.M)
 
       setOutput(grammarObject)
     }
@@ -614,7 +618,7 @@ function App() {
               <p>{"blank symbol: " + lba.blank}</p>
               <p>{"end states: " + lba.endStates.join(", ")}</p>
               <br></br>
-              <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>
+              {eliminateBlank && <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>}
             </div>
           </div>
           <div className="LBA gui-element">
@@ -625,8 +629,8 @@ function App() {
           </div>
           <div className="LBA gui-element">
             <legend>M</legend>
-            {(eliminateX) && (
-              <LbaGraph lba={eliminateX} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+            {(eliminateBlank) && (
+              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300}></LbaGraph>
             )}
           </div>
         </div>

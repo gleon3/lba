@@ -72,3 +72,5 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 to generate jsdoc in doc folder: 
 jsdoc -c jsdoc.json
+
+npm run deploy
