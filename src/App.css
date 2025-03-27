@@ -48,12 +48,17 @@
 }
 
 .lba-info{
+  
   overflow-y: scroll;
   max-height: 270px;
 }
 
 .info-text{
   display: flex;
+}
+
+.steps-text{
+  display: none;
 }
 
 .LBA{

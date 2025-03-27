@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import './App.css';
-import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
+import {Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
 
 /**
  * A component that displays a start state.
@@ -213,7 +213,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  *
  * @typedef {Object} LbaGraphProps
  * @property {LBA} lba - The lba that will be represented by the state diagram.
- * @property {Number} radius - The radius that will be used for displaying the states of the lba.
+ * @property {Number} radius - The radius that will be used for displaying the states of the lba.LBA.
  * @property {Number} distanceY - The distance between states in the Y Direction.
  * @property {Number} distanceX - The distance between states in the X Direction.
  *
@@ -252,7 +252,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       y: row * distanceY + marginY,
     }
 
-    if (state === lba.startState) {
+    if (state === lba.LBA.startState) {
       //start states have a transition built in, so they need extra space compared to normal states
       row += 1
       height += distanceY
@@ -268,7 +268,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
         <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
       )
     }
-    else if (lba.endStates.includes(state)) {
+    else if (lba.LBA.endStates.includes(state)) {
       lbaElements.push(
         <EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}></EndState>
       )
@@ -282,7 +282,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       alreadyDrawn.set(state, [col, row])
     }
 
-    const transitions = lba.delta.get(state)
+    const transitions = lba.LBA.delta.get(state)
 
     //there are no more states to draw for this iteration, so exit the function early and do nothing
     if (!transitions)
@@ -311,7 +311,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       const stateCol = alreadyDrawn.get(state)[0]
       const stateRow = alreadyDrawn.get(state)[1]
 
-      const transitions = lba.delta.get(state)
+      const transitions = lba.LBA.delta.get(state)
 
       //there are no transitions for the given state, so exit the function early and do nothing
       if (!transitions)
@@ -373,19 +373,18 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   }
 
 
-  if (lba) {
-    //alreadyDrawn.set(lba.startState, [0, j])
+  if (lba.LBA) {
+    //alreadyDrawn.set(lba.LBA.startState, [0, j])
+    drawStatesFromState(lba.LBA.startState)
 
-    drawStatesFromState(lba.startState)
-
-    for (const state of lba.states) {
+    for (const state of lba.LBA.states) {
       drawTransitions(state)
     }
 
     width += radius + marginX * 2
     height += radius + marginY * 2
 
-    //drawTransition(lba.startState)
+    //drawTransition(lba.LBA.startState)
   }
   return (
     <svg width={width} height={height}>
@@ -405,7 +404,7 @@ function App() {
   const [terminalValue, setTerminalValue] = useState('')
   const [productionValue, setProductionValue] = useState('')
 
-  const [lba, setLBA] = useState('')
+  const [lbaOutput, setLbaOutput] = useState('')
   const [eliminateBlank, setEliminateBlank] = useState('')
 
   const [inputGrammar, setInputGrammar] = useState('')
@@ -425,13 +424,13 @@ function App() {
       const kuroda_grammar = convert_to_kuroda(inputGrammar)
 
       const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
-      console.log("LBA", createdLBA.LBA)
-      console.log("M", createdLBA.M)
+      console.log("LBA", createdLBA.LBA) 
+      if (createdLBA.M) {
+        console.log("M", createdLBA.M)
+      }
 
-      setLBA(createdLBA.LBA)
+      setLbaOutput(createdLBA)
       setEliminateBlank(createdLBA.M)
-
-      console.log(kuroda_grammar.steps)
 
       setOutput(kuroda_grammar)
     } else {
@@ -441,12 +440,13 @@ function App() {
       }
 
       const createdLBA = grammar_to_lba(grammarObject.grammar)
+
       console.log("LBA", createdLBA.LBA)
-      if(createdLBA.M){
+      if (createdLBA.M) {
         console.log("M", createdLBA.M)
       }
 
-      setLBA(createdLBA.LBA)
+      setLbaOutput(createdLBA)
       setEliminateBlank(createdLBA.M)
 
       setOutput(grammarObject)
@@ -524,14 +524,14 @@ function App() {
     terminalValue: "a, b",
     productionValue: "S->AS,\nS->BS,\nS->a,\nABAA->AAAB,\nABAB->AABB,\nBAA->AAB,\nBAB->ABB,\nBBA->ABB,\nAA->aa,\nBB->bb"
   }
-  
+
   const example3 = {
     startValue: "S",
     nonterminalValue: "S, A, B",
     terminalValue: "a, b",
     productionValue: "S->AB,\nS->A,\nA->a,\nB->b,\nAB->BA"
-  }  
-  
+  }
+
   const example4 = {
     startValue: "S",
     nonterminalValue: "S, B",
@@ -567,19 +567,17 @@ function App() {
                 const exampleList = document.getElementById("examples")
                 const selected = exampleList.selectedOptions
 
-                if(selected.length > 1){
+                if (selected.length > 1) {
                   throw Error("somehow selected more than 1 option from dropdown menu.")
                 }
 
                 const example = examples[selected[0].value]
 
                 setUserInput(example.startValue, example.nonterminalValue, example.terminalValue, example.productionValue)
-            }}>use example</button>
+              }}>use example</button>
           </div>)}
       </div>
       {inputGrammar && (
-        
-          
         <div className="grammar-info gui-element">
           <legend>input-info</legend>
           <div>
@@ -600,31 +598,85 @@ function App() {
               <p>{"terminals: " + output.grammar.terminals.join(", ")}</p>
               <p>{"start symbol: " + output.grammar.start}</p>
               <p>{"productions: " + output.grammar.productions.join(", ")}</p>
-              <p>{JSON.stringify(output.steps)}</p>
+              <div id="output-grammar-steps" className="steps-text">
+                <br></br>
+                <p>Begin algorithm to convert grammar to kuroda-normalform</p>
+                {output.steps.map((step, i) => {
+                  return (
+                    <div key={i}>
+                      <p>{"-step " + (i + 1) + " " + step.description}</p>
+                      <dd>
+                        {!(step.newVariables.length == 0) && <p>{"introduce new variables " + step.newVariables}</p>}
+                        {step.newProductions && <p>{"introduce new productions " + step.newProductions.toString()}</p>}
+                        {Array.from(step.replacedProductions).map(([key, value], i) => { return <p key={i}>{key.toString() + " replaced with " + value.toString()}</p> })}
+                      </dd>
+                    </div>
+                  )
+                })}
+
+              </div>
+              <button className="show-steps" id="show-steps-grammar" onClick={() => {
+                const element = document.getElementById("output-grammar-steps")
+
+                if (element.style.display === "block") {
+                  element.style.display = "none";
+                  document.getElementById("show-steps-grammar").innerText = "show steps"
+                } else {
+                  element.style.display = "block"
+                  document.getElementById("show-steps-grammar").innerText = "hide steps"
+                }
+
+              }}>show steps</button>
             </div>
           )}
         </div>
       )}
-      {lba && (
+      {lbaOutput && (
         <div>
           <div className="lba-info gui-element">
             <legend>lba-info</legend>
             <div>
-              <p>{"states: " + lba.states.join(", ")}</p>
-              <p>{"alphabet: " + lba.inputAlphabet.join(", ")}</p>
-              <p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}</p>
+              <p>{"states: " + lbaOutput.LBA.states.join(", ")}</p>
+              <p>{"alphabet: " + lbaOutput.LBA.inputAlphabet.join(", ")}</p>
+              <p>{"tape alphabet: " + lbaOutput.LBA.tapeAlphabet.join(", ")}</p>
               <p>{"delta: to view delta check the browser console"}</p>
-              <p>{"start state: " + lba.startState}</p>
-              <p>{"blank symbol: " + lba.blank}</p>
-              <p>{"end states: " + lba.endStates.join(", ")}</p>
-              <br></br>
+              <p>{"start state: " + lbaOutput.LBA.startState}</p>
+              <p>{"blank symbol: " + lbaOutput.LBA.blank}</p>
+              <p>{"end states: " + lbaOutput.LBA.endStates.join(", ")}</p>
+              
               {eliminateBlank && <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>}
+              <div id="output-lba-steps" className="steps-text">
+                <br></br>
+                <p>Begin algorithm to convert grammar to lba accepting the same language the grammar generates</p>
+                {Array.from(lbaOutput.steps).map(([key, value], i) => {
+                  return (
+                    <div key={i}>
+                      <p>{"-step " + (i + 1) + " " + key}</p>
+                      <dd>
+                        <p>{value.newTransitions.toString()}</p>
+                      </dd>
+                    </div>
+                  )
+                })}
+
+              </div>
+              <button className="show-steps" id="show-steps-lba" onClick={() => {
+                const element = document.getElementById("output-lba-steps")
+
+                if (element.style.display === "block") {
+                  element.style.display = "none";
+                  document.getElementById("show-steps-lba").innerText = "show steps"
+                } else {
+                  element.style.display = "block"
+                  document.getElementById("show-steps-lba").innerText = "hide steps"
+                }
+              }}>show steps</button>
             </div>
           </div>
           <div className="LBA gui-element">
             <legend>Linear Bounded Automaton</legend>
-            {(lba) && (
-              <LbaGraph lba={lba} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+            {(lbaOutput) && (
+              <LbaGraph lba={lbaOutput} radius={50} distanceX={300} distanceY={300}></LbaGraph>
             )}
           </div>
           <div className="LBA gui-element">
