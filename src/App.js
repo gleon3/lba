@@ -1,7 +1,7 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import './App.css';
-import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_eliminate_x } from "./lba.js";
+import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
 
 /**
  * A component that displays a start state.
@@ -16,7 +16,6 @@ import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda, lba_
  * @returns {JSX.Element}
  */
 const StartState = ({ startPosition, statePosition, radius, name }) => {
-
   return (
     <svg>
       <State position={statePosition} radius={radius} name={name}></State>
@@ -79,20 +78,25 @@ const EndState = ({ position, radius, name }) => {
  */
 const Transition = ({ startPoint, endPoint, radius, label }) => {
   const [isFocused, setFocus] = useState(false)
+  const elementRef = useRef()
 
-  let elementRef = React.createRef();
-
-  function handleMouseOver(){
+  /**
+  * Handles hovering mouse over transition. Tells compontent that mouse is over transition. Removes transition to "redraw" it over other svg elements. 
+  */
+  function handleMouseOver() {
     var target = elementRef.current
-
     var parent = target.ownerSVGElement
 
+    target.remove()
     parent.appendChild(target)
 
     setFocus(true)
   }
 
-  function handleMouseLeave(){
+  /**
+  * Handles leaving mouse from transition after hovering. Tells compontent that mouse is no longer over transition.
+  */
+  function handleMouseLeave() {
     setFocus(false)
   }
 
@@ -204,7 +208,18 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
   }
 }
 
-//TOdo: rework
+/**
+ * A component that displays a state diagram of a linear bounded automaton.
+ *
+ * @typedef {Object} LbaGraphProps
+ * @property {LBA} lba - The lba that will be represented by the state diagram.
+ * @property {Number} radius - The radius that will be used for displaying the states of the lba.
+ * @property {Number} distanceY - The distance between states in the Y Direction.
+ * @property {Number} distanceX - The distance between states in the X Direction.
+ *
+ * @param {LbaGraphProps} props
+ * @returns {JSX.Element}
+ */
 const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
@@ -296,7 +311,6 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       const stateCol = alreadyDrawn.get(state)[0]
       const stateRow = alreadyDrawn.get(state)[1]
 
-
       const transitions = lba.delta.get(state)
 
       //there are no transitions for the given state, so exit the function early and do nothing
@@ -374,12 +388,17 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
     //drawTransition(lba.startState)
   }
   return (
-    <svg id="svgParent" className="svg" width={width} height={height}>
+    <svg width={width} height={height}>
       {lbaElements}
     </svg>
   )
 }
 
+/**
+ * The main function of the program. Displays the program and handles user interaction.
+ *
+ * @returns {JSX.Element}
+ */
 function App() {
   const [startValue, setStartValue] = useState('')
   const [nonterminalValue, setNonterminalValue] = useState('')
@@ -389,31 +408,45 @@ function App() {
   const [lba, setLBA] = useState('')
   const [eliminateX, setEliminateX] = useState('')
 
-  const [grammar, setGrammar] = useState('')
-  const [kurodaGrammar, setKurodaGrammar] = useState('')
+  const [inputGrammar, setInputGrammar] = useState('')
+  const [output, setOutput] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault();
 
     const nonterminals = nonterminalValue.split(' ').join('').split(',')
     const terminals = terminalValue.split(' ').join('').split(',')
-    let productions = productionValue.split(' ').join('').split(',')
+    const productions = handleProductions(productionValue.split(' ').join('').split(','))
 
-    productions = handleProductions(productions)
+    const inputGrammar = new Grammar(nonterminals, terminals, productions, startValue)
+    setInputGrammar(inputGrammar)
 
-    const grammar = new Grammar(nonterminals, terminals, productions, startValue)
-    setGrammar(grammar)
+    if (!is_kuroda(inputGrammar)) {
+      const kuroda_grammar = convert_to_kuroda(inputGrammar)
 
-    const kuroda_grammar = is_kuroda(grammar) ? grammar : convert_to_kuroda(grammar)
-    setKurodaGrammar(kuroda_grammar)
+      const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
+      console.log("LBA", createdLBA.LBA)
+      console.log("M", createdLBA.M)
 
+      setLBA(createdLBA.LBA)
+      setEliminateX(createdLBA.M)
 
-    const createdLBA = grammar_to_lba(kuroda_grammar)
-    console.log("LBA", createdLBA.LBA)
-    console.log("M", createdLBA.M)
+      setOutput(kuroda_grammar)
+    } else {
+      const grammarObject = {
+        steps: [],
+        grammar: inputGrammar
+      }
 
-    setLBA(createdLBA.LBA)
-    setEliminateX(createdLBA.M)
+      const createdLBA = grammar_to_lba(grammarObject.grammar)
+      console.log("LBA", createdLBA.LBA)
+      console.log("M", createdLBA.M)
+
+      setLBA(createdLBA.LBA)
+      setEliminateX(createdLBA.M)
+
+      setOutput(grammarObject)
+    }
   }
 
   function handleStartValue(startValue) {
@@ -447,71 +480,166 @@ function App() {
     return productions
   }
 
+  function setExample() {
+    const exampleStart = "S"
+    const exampleNonterminals = "S, A, B"
+    const exampleTerminals = "a, b"
+    const exampleProductions = "S->AB,\nAB->ab"
+
+    setUserInput(exampleStart, exampleNonterminals, exampleTerminals, exampleProductions)
+  }
+
+  /**
+     * Sets the user input to the given parameters.
+     * @param {String} start - The text to put in the start textarea.
+     * @param {String} nonterminals - The text to put in the nonterminals textarea.
+     * @param {String} terminals - The text to put in the terminals textarea.
+     * @param {String} productions - The text to put in the productions textarea.
+     */
+  function setUserInput(start, nonterminals, terminals, productions) {
+    document.getElementById('start textarea').value = start
+    setStartValue(start)
+    document.getElementById('nonterminals textarea').value = nonterminals
+    setNonterminalValue(nonterminals)
+    document.getElementById('terminals textarea').value = terminals
+    setTerminalValue(terminals)
+    document.getElementById('productions textarea').value = productions
+    setProductionValue(productions)
+  }
+
+  const example1 = {
+    startValue: "S",
+    nonterminalValue: "S, A, B",
+    terminalValue: "a, b",
+    productionValue: "S->AB,\nAB->ab"
+  }
+
+  const example2 = {
+    startValue: "S",
+    nonterminalValue: "S, A, B",
+    terminalValue: "a, b",
+    productionValue: "S->AS,\nS->BS,\nS->a,\nABAA->AAAB,\nABAB->AABB,\nBAA->AAB,\nBAB->ABB,\nBBA->ABB,\nAA->aa,\nBB->bb"
+  }
+  
+  const example3 = {
+    startValue: "S",
+    nonterminalValue: "S, A, B",
+    terminalValue: "a, b",
+    productionValue: "S->AB,\nS->A,\nA->a,\nB->b,\nAB->BA"
+  }  
+  
+  const example4 = {
+    startValue: "S",
+    nonterminalValue: "S, B",
+    terminalValue: "a, b, c",
+    productionValue: "S->aSBc,\nS->abc,\ncB->Bc,\nbB->bb"
+  }
+
+  const examples = [example1, example2, example3, example4]
+
+
   return (
     <div>
       <div className="menu gui-element">
         <legend>Menu</legend>
         <label>start:</label>
-        <textarea onChange={(e) => setStartValue(e.target.value)}></textarea>
+        <textarea id="start textarea" onChange={(e) => setStartValue(e.target.value)}></textarea>
         <label>nonterminals:</label>
-        <textarea onChange={(e) => setNonterminalValue(e.target.value)}></textarea>
+        <textarea id="nonterminals textarea" onChange={(e) => setNonterminalValue(e.target.value)}></textarea>
         <label>terminals:</label>
-        <textarea onChange={(e) => setTerminalValue(e.target.value)}></textarea>
+        <textarea id="terminals textarea" onChange={(e) => setTerminalValue(e.target.value)}></textarea>
         <label>productions:</label>
-        <textarea rows={5} onChange={(e) => setProductionValue(e.target.value)}></textarea>
+        <textarea id="productions textarea" onChange={(e) => setProductionValue(e.target.value)}></textarea>
         <button onClick={handleSubmit}>submit</button>
-      </div>
-      <div className="grammar-info gui-element">
-        <legend>input-info</legend>
-        {(grammar) && (
-          <div>
-            <p>{"nonterminals: " + grammar.nonterminals.join(", ")}</p>
-            <p>{"terminals: " + grammar.terminals.join(", ")}</p>
-            <p>{"start symbol: " + grammar.start}</p>
-            <p>{"productions: " + grammar.productions.join(", ")}</p>
-          </div>
-        )}
-      </div>
-      <div className="grammar-info gui-element">
-        <legend>grammar-info</legend>
-        <p>{grammar ? (grammar === kurodaGrammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.") : ""}</p>
-        {(grammar !== kurodaGrammar) && (
-          <div>
-            <p>{"nonterminals: " + kurodaGrammar.nonterminals.join(", ")}</p>
-            <p>{"terminals: " + kurodaGrammar.terminals.join(", ")}</p>
-            <p>{"start symbol: " + kurodaGrammar.start}</p>
-            <p>{"productions: " + kurodaGrammar.productions.join(", ")}</p>
-          </div>
-        )}
+        {examples && (
+          <div className="example">
+            <select name="examples" id="examples">
+              {examples.map((example, i) => {
+                return <option key={i} value={i}>{example.productionValue}</option>
+              })}
+            </select>
+            <button onClick={
+              () => {
+                const exampleList = document.getElementById("examples")
+                const selected = exampleList.selectedOptions
 
+                if(selected.length > 1){
+                  throw Error("somehow selected more than 1 option from dropdown menu.")
+                }
+
+                const example = examples[selected[0].value]
+
+                setUserInput(example.startValue, example.nonterminalValue, example.terminalValue, example.productionValue)
+            }}>use example</button>
+          </div>)}
       </div>
-      <div className="lba-info gui-element">
-        <legend>lba-info</legend>
-        {(lba) && (
+      {inputGrammar && (
+        
+          
+        <div className="grammar-info gui-element">
+          <legend>input-info</legend>
           <div>
-            <p>{"states: " + lba.states.join(", ")}</p>
-            <p>{"alphabet: " + lba.inputAlphabet.join(", ")}</p>
-            <p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}</p>
-            <p>{"delta: to view delta check the browser console"}</p>
-            <p>{"start state: " + lba.startState}</p>
-            <p>{"blank symbol: " + lba.blank}</p>
-            <p>{"end states: " + lba.endStates.join(", ")}</p>
-            <br></br>
-            <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>
+            <p>{"nonterminals: " + inputGrammar.nonterminals.join(", ")}</p>
+            <p>{"terminals: " + inputGrammar.terminals.join(", ")}</p>
+            <p>{"start symbol: " + inputGrammar.start}</p>
+            <p>{"productions: " + inputGrammar.productions.join(", ")}</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+      {output && (
+        <div className="grammar-info gui-element">
+          <legend>grammar-info</legend>
+          <p>{(inputGrammar === output.grammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.")}</p>
+          {(inputGrammar !== output.grammar) && (
+            <div>
+              <p>{"nonterminals: " + output.grammar.nonterminals.join(", ")}</p>
+              <p>{"terminals: " + output.grammar.terminals.join(", ")}</p>
+              <p>{"start symbol: " + output.grammar.start}</p>
+              <p>{"productions: " + output.grammar.productions.join(", ")}</p>
+              <p>{JSON.stringify(output.steps)}</p>
+            </div>
+          )}
+        </div>
+      )}
+      {lba && (
+        <div>
+          <div className="lba-info gui-element">
+            <legend>lba-info</legend>
+            <div>
+              <p>{"states: " + lba.states.join(", ")}</p>
+              <p>{"alphabet: " + lba.inputAlphabet.join(", ")}</p>
+              <p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}</p>
+              <p>{"delta: to view delta check the browser console"}</p>
+              <p>{"start state: " + lba.startState}</p>
+              <p>{"blank symbol: " + lba.blank}</p>
+              <p>{"end states: " + lba.endStates.join(", ")}</p>
+              <br></br>
+              <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>
+            </div>
+          </div>
+          <div className="LBA gui-element">
+            <legend>Linear Bounded Automaton</legend>
+            {(lba) && (
+              <LbaGraph lba={lba} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+            )}
+          </div>
+          <div className="LBA gui-element">
+            <legend>M</legend>
+            {(eliminateX) && (
+              <LbaGraph lba={eliminateX} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+            )}
+          </div>
+        </div>
+      )}
+
+
       <div className="LBA gui-element">
-        <legend>Linear Bounded Automaton</legend>
-        {(lba) && (
-          <LbaGraph lba={lba} radius={50} distanceX={300} distanceY={300}></LbaGraph>
-        )}
-      </div>
-      <div className="LBA gui-element">
-        <legend>M</legend>
-        {(eliminateX) && (
-          <LbaGraph lba={eliminateX} radius={50} distanceX={300} distanceY={300}></LbaGraph>
-        )}
+        <legend>test zone</legend>
+        <svg width={1000} height={1000}>
+          <State position={{ x: 300, y: 300 }} radius={50} name="z1"></State>
+          <State position={{ x: 600, y: 400 }} radius={50} name="z2"></State>
+          <Transition startPoint={{ x: 300, y: 300 }} endPoint={{ x: 600, y: 400 }} radius={50} label={["a"]}></Transition>
+        </svg>
       </div>
     </div>
   );
