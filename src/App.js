@@ -216,11 +216,12 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  * @property {Number} radius - The radius that will be used for displaying the states of the lba.LBA.
  * @property {Number} distanceY - The distance between states in the Y Direction.
  * @property {Number} distanceX - The distance between states in the X Direction.
- *
+ * @property {Number} mode - The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1 - 
+ * 
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -318,6 +319,8 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
         return
 
       for (let [toState, label] of transitions) {
+        console.log(state,toState)
+
         if (alreadyDrawn.get(toState)) {
           const toStateCol = alreadyDrawn.get(toState)[0]
           const toStateRow = alreadyDrawn.get(toState)[1]
@@ -351,31 +354,76 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   * @param {Number} row - The index of the row the states are drawn in.
   */
   function drawStates(states, row) {
-    let count = 1
+    if(states.length == 0){
+      return
+    }
+
+    let count = 0
     for (let state of states) {
-      const statePosition = {
-        x: count * distanceX,
-        y: row * distanceY
+      const statePoint = {
+        x: count * distanceX + marginX,
+        y: row * distanceY + marginY,
       }
 
       if (!alreadyDrawn.get(state)) {
-        alreadyDrawn.set(state, [count, row - 1])
-      }
 
-      lbaElements.push(
-        <State position={statePosition} radius={radius} name={state}></State>
-      )
-      count++
-      width += distanceX
+        if (state === lba.LBA.startState) {
+          //start states have a transition built in, so they need extra space compared to normal states
+          row += 1
+          height += distanceY
+    
+          const startPoint = statePoint
+    
+          const startStatePoint = {
+            x: statePoint.x,
+            y: statePoint.y + distanceY,
+          }
+    
+          lbaElements.push(
+            <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
+          )
+        }
+        else if (lba.LBA.endStates.includes(state)) {
+          lbaElements.push(
+            <EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}></EndState>
+          )
+        } else {
+          lbaElements.push(
+            <State key={'state ' + state} position={statePoint} radius={radius} name={state}></State>
+          )
+        }
+
+        alreadyDrawn.set(state, [count, row])
+
+        count++
+        width += distanceX
+      }
     }
-    height += row * distanceY
-    row += 1
+    if (count > 0){
+      height+= distanceY
+    }
   }
 
 
   if (lba.LBA) {
-    //alreadyDrawn.set(lba.LBA.startState, [0, j])
-    drawStatesFromState(lba.LBA.startState)
+    if(mode == 0){
+      //alreadyDrawn.set(lba.LBA.startState, [0, j])
+      drawStatesFromState(lba.LBA.startState)
+    }else if(mode == 1){
+
+      drawStates([lba.LBA.startState], 0)
+      let i = 1
+      for(const state of lba.LBA.states){
+        
+        if(lba.LBA.delta.get(state)){
+          i++
+          drawStates(lba.LBA.delta.get(state).keys(), i)
+        }
+      }
+    }
+    else{
+      throw Error("entered wrong mode. Please use 0 for recursive style and 1 for row style")
+    }
 
     for (const state of lba.LBA.states) {
       drawTransitions(state)
@@ -682,7 +730,7 @@ function App() {
           <div className="LBA gui-element">
             <legend>M</legend>
             {(eliminateBlank) && (
-              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode="1"></LbaGraph>
             )}
           </div>
         </div>

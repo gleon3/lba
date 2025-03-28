@@ -615,7 +615,7 @@ export function lba_eliminate_blank(grammar) {
     const newStates = ['zin']
     const newTransitions = []
 
-    for (let symbol of TM.tapeAlphabet) {
+    for (let symbol of TM.inputAlphabet) {
         const newStateSymbol = TM.add_state(symbol)
         newStates.push(newStateSymbol)
 
@@ -624,7 +624,7 @@ export function lba_eliminate_blank(grammar) {
         TM.add_transition(transition1)
         newTransitions.push(transition1)
 
-        for (let innerSymbol of TM.tapeAlphabet) {
+        for (let innerSymbol of TM.inputAlphabet) {
             const transition2 = new Transition(symbol, innerSymbol, innerSymbol, symbol, 'R')
             TM.add_transition(transition2)
             newTransitions.push(transition2)
