@@ -149,6 +149,11 @@ class LBA {
             return
         }
 
+        //LBA stops when in end state
+        if(this.endStates.includes(fromState)){
+            return
+        }
+
         const label = transition.readSymbol + " : " + transition.newSymbol + ", " + transition.direction
 
         if (this.delta.get(fromState)) {
@@ -480,10 +485,7 @@ export function grammar_to_lba(grammar) {
         const addedTransitions = []
 
         if (production.right.length === 1) {
-            //for A->a or A->B replace current symbol with A
-            //(z,a) -> (z,A,R)
-            //(z,B) -> (z,B,R)
-
+            //for A->a replace a with A
             const newState = lba.add_state()
             addedStates.push(newState)
             const transition1 = new Transition('z0', newState, production.right[0], production.left[0], 'L')
@@ -501,11 +503,10 @@ export function grammar_to_lba(grammar) {
             addedTransitions.push(transition3)
         } else if (production.right.length === 2) {
             if (production.left.length === 2) {
+                //for AB->CD replace CD with AB
                 const addedStates = []
                 const addedTransitions = []
 
-                //for AB->CD, write B, change head to left, write A 
-                //(z,C) -> (z,A,R)
                 const newState1 = lba.add_state()
                 addedStates.push(newState1)
 
@@ -513,7 +514,6 @@ export function grammar_to_lba(grammar) {
                 lba.add_transition(transition1)
                 addedTransitions.push(transition1)
 
-                // if B (z,D) -> (z,B,R)
                 const newState2 = lba.add_state()
                 addedStates.push(newState2)
 
@@ -527,11 +527,12 @@ export function grammar_to_lba(grammar) {
                     addedTransitions.push(transition3)
                 }
 
-                const transition4 = new Transition(newState2, 'z0', lba.leftEndmarker, lba.leftEndmarker, 'L')
+                const transition4 = new Transition(newState2, 'z0', lba.leftEndmarker, lba.leftEndmarker, 'R')
                 lba.add_transition(transition4)
                 addedTransitions.push(transition4)
 
             } else if (production.left.length === 1) {
+                //for A->CD replace CD with xA and then use step to eliminate x (x = Blank)
                 const newState1 = lba.add_state()
                 addedStates.push(newState1)
 

@@ -467,7 +467,7 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, stat
 /**
  * The main function of the program. Displays the program and handles user interaction.
  *
- * @returns {JSX.Element}
+ * @returns {JSX.Element} The main application.
  */
 function App() {
   const [startValue, setStartValue] = useState('')
@@ -484,43 +484,50 @@ function App() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    const nonterminals = nonterminalValue.split(' ').join('').split(',')
-    const terminals = terminalValue.split(' ').join('').split(',')
-    const productions = handleProductions(productionValue.split(' ').join('').split(','))
+    try{
+      const nonterminals = nonterminalValue.split(' ').join('').split(',')
+      const terminals = terminalValue.split(' ').join('').split(',')
+      handleSymbols(nonterminals, terminals)
 
-    const inputGrammar = new Grammar(nonterminals, terminals, productions, startValue)
-    setInputGrammar(inputGrammar)
+      const start = handleStartValue(startValue, nonterminals)
+      const productions = handleProductions(productionValue.split(' ').join('').split(','))
 
-    if (!is_kuroda(inputGrammar)) {
-      const kuroda_grammar = convert_to_kuroda(inputGrammar)
+      const inputGrammar = new Grammar(nonterminals, terminals, productions, start)
+      setInputGrammar(inputGrammar)
 
-      const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
-      console.log("LBA", createdLBA.LBA)
-      if (createdLBA.M) {
-        console.log("M", createdLBA.M)
+      if (!is_kuroda(inputGrammar)) {
+        const kuroda_grammar = convert_to_kuroda(inputGrammar)
+
+        const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
+        console.log("LBA", createdLBA.LBA)
+        if (createdLBA.M) {
+          console.log("M", createdLBA.M)
+        }
+
+        setLbaOutput(createdLBA)
+        setEliminateBlank(createdLBA.M)
+
+        setOutput(kuroda_grammar)
+      } else {
+        const grammarObject = {
+          steps: [],
+          grammar: inputGrammar
+        }
+
+        const createdLBA = grammar_to_lba(grammarObject.grammar)
+
+        console.log("LBA", createdLBA.LBA)
+        if (createdLBA.M) {
+          console.log("M", createdLBA.M)
+        }
+
+        setLbaOutput(createdLBA)
+        setEliminateBlank(createdLBA.M)
+
+        setOutput(grammarObject)
       }
-
-      setLbaOutput(createdLBA)
-      setEliminateBlank(createdLBA.M)
-
-      setOutput(kuroda_grammar)
-    } else {
-      const grammarObject = {
-        steps: [],
-        grammar: inputGrammar
-      }
-
-      const createdLBA = grammar_to_lba(grammarObject.grammar)
-
-      console.log("LBA", createdLBA.LBA)
-      if (createdLBA.M) {
-        console.log("M", createdLBA.M)
-      }
-
-      setLbaOutput(createdLBA)
-      setEliminateBlank(createdLBA.M)
-
-      setOutput(grammarObject)
+    }catch(e){
+      alert(e)
     }
   }
 
@@ -539,21 +546,26 @@ function App() {
   }
 
   function handleSymbols(nonterminals, terminals) {
-    if(terminals.startValue.includes("-") || terminals.includes('>')){
-      throw new Error('Dont use , - or > in terminals')
+    if(terminals.includes("-") || terminals.includes('>')){
+      throw new Error('Dont use - or > in terminals')
     }
 
-    if(nonterminals.startValue.includes("-") || nonterminals.includes('>')){
-      throw new Error('Dont use , - or > in nonterminals')
+    if(nonterminals.includes("-") || nonterminals.includes('>')){
+      throw new Error('Dont use - or > in nonterminals')
     }
 
     const filteredArray = terminals.filter(value => nonterminals.includes(value))
 
     if(filteredArray.length > 0){
       throw new Error("the intersection between terminals and nonterminals has to be empty")
-    } 
+    }
   }
 
+  /**
+     * Checks if productions string is valid, if not th.
+     * @param {String} productionsString - A string representing a set of productions.
+     * @throws {Error} An Error with a message explaining what is wrong with the productions string
+     */
   function handleProductions(productionsString) {
     let productions = []
 
@@ -563,6 +575,10 @@ function App() {
       try {
         const left = prod.split('->')[0]
         const right = prod.split('->')[1]
+
+        if(left === "" || right === ""){
+          throw new Error("productions has no left or right side. please input productions in the form l->r")
+        }
 
         const production = new Production(left.split(''), right.split(''))
 
