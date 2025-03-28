@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import './App.css';
-import {Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
+import { Production, Grammar, convert_to_kuroda, grammar_to_lba, is_kuroda } from "./lba.js";
 
 /**
  * A component that displays a start state.
@@ -212,16 +212,18 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  * A component that displays a state diagram of a linear bounded automaton.
  *
  * @typedef {Object} LbaGraphProps
- * @property {LBA} lba - The lba that will be represented by the state diagram.
+ * @property {Object} inputObject - The input containing an object that contains lba object and steps that stores information about the steps of the creation of the lba.
  * @property {Number} radius - The radius that will be used for displaying the states of the lba.LBA.
  * @property {Number} distanceY - The distance between states in the Y Direction.
  * @property {Number} distanceX - The distance between states in the X Direction.
- * @property {Number} mode - The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1 - 
+ * @property {Number} mode - The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1
+ * @property {String[]} statesToDrawTransitionsFor - Only transitions from and to states in this array will be drawn. Default is every state.
  * 
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
+const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = inputObject.LBA.states }) => {
+
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -253,7 +255,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
       y: row * distanceY + marginY,
     }
 
-    if (state === lba.LBA.startState) {
+    if (state === inputObject.LBA.startState) {
       //start states have a transition built in, so they need extra space compared to normal states
       row += 1
       height += distanceY
@@ -269,7 +271,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
         <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
       )
     }
-    else if (lba.LBA.endStates.includes(state)) {
+    else if (inputObject.LBA.endStates.includes(state)) {
       lbaElements.push(
         <EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}></EndState>
       )
@@ -283,7 +285,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
       alreadyDrawn.set(state, [col, row])
     }
 
-    const transitions = lba.LBA.delta.get(state)
+    const transitions = inputObject.LBA.delta.get(state)
 
     //there are no more states to draw for this iteration, so exit the function early and do nothing
     if (!transitions)
@@ -303,46 +305,50 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
   }
 
   /**
-  * Draws all transitions from a recursively from a given state.
+  * Draws all transitions from a from a given state.
   * 
   * @param {String} state - The state.
   */
   function drawTransitions(state) {
-    if (alreadyDrawn.get(state)) {
-      const stateCol = alreadyDrawn.get(state)[0]
-      const stateRow = alreadyDrawn.get(state)[1]
-
-      const transitions = lba.LBA.delta.get(state)
+      const transitions = inputObject.LBA.delta.get(state)
 
       //there are no transitions for the given state, so exit the function early and do nothing
       if (!transitions)
         return
 
       for (let [toState, label] of transitions) {
-        console.log(state,toState)
+        drawTransition(state, toState, label)
+      } 
+  }
 
-        if (alreadyDrawn.get(toState)) {
-          const toStateCol = alreadyDrawn.get(toState)[0]
-          const toStateRow = alreadyDrawn.get(toState)[1]
+  /**
+  * Draws a transition from one state to another state.
+  * 
+  * @param {String} fromState - The state where the transition begins.
+  * @param {String} toState - The state where the transition ends
+  * @param {String[]} label - The label of the transition
+  */
+  function drawTransition(fromState, toState, label) {
+    if (alreadyDrawn.get(fromState) && alreadyDrawn.get(toState)) {
+      const stateCol = alreadyDrawn.get(fromState)[0]
+      const stateRow = alreadyDrawn.get(fromState)[1]
 
-          const startPoint = {
-            x: stateCol * distanceX + marginX,
-            y: stateRow * distanceY + marginY,
-          }
+      const toStateCol = alreadyDrawn.get(toState)[0]
+      const toStateRow = alreadyDrawn.get(toState)[1]
 
-          const endPoint = {
-            x: toStateCol * distanceX + marginX,
-            y: toStateRow * distanceY + marginY
-          }
-
-          lbaElements.push(<Transition key={'Transition from state ' + state + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
-        } else {
-          throw new Error("Trying to draw a transition to a state that hasnt been drawn yet!")
-        }
+      const startPoint = {
+        x: stateCol * distanceX + marginX,
+        y: stateRow * distanceY + marginY,
       }
 
+      const endPoint = {
+        x: toStateCol * distanceX + marginX,
+        y: toStateRow * distanceY + marginY
+      }
+
+      lbaElements.push(<Transition key={'Transition from state ' + fromState + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
     } else {
-      throw new Error("Trying to draw transitions from a state that hasnt been drawn yet!" + state)
+      throw new Error("trying to draw from or to state that hasnt been drawn yet: " + fromState + "to" + toState)
     }
   }
 
@@ -354,36 +360,40 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
   * @param {Number} row - The index of the row the states are drawn in.
   */
   function drawStates(states, row) {
-    if(states.length == 0){
+    if (states.length == 0) {
       return
     }
 
     let count = 0
+
+
     for (let state of states) {
+      const rowInput = row
+
       const statePoint = {
         x: count * distanceX + marginX,
-        y: row * distanceY + marginY,
+        y: row * distanceY + marginY
       }
 
       if (!alreadyDrawn.get(state)) {
 
-        if (state === lba.LBA.startState) {
+        if (state === inputObject.LBA.startState) {
           //start states have a transition built in, so they need extra space compared to normal states
           row += 1
           height += distanceY
-    
+
           const startPoint = statePoint
-    
+
           const startStatePoint = {
             x: statePoint.x,
             y: statePoint.y + distanceY,
           }
-    
+
           lbaElements.push(
             <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
           )
         }
-        else if (lba.LBA.endStates.includes(state)) {
+        else if (inputObject.LBA.endStates.includes(state)) {
           lbaElements.push(
             <EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}></EndState>
           )
@@ -398,41 +408,52 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode=0 }) => {
         count++
         width += distanceX
       }
+
+      row = rowInput
     }
-    if (count > 0){
-      height+= distanceY
+    if (count > 0) {
+      height += distanceY
     }
   }
 
 
-  if (lba.LBA) {
-    if(mode == 0){
+  if (inputObject.LBA) {
+    if (mode == 0) {
       //alreadyDrawn.set(lba.LBA.startState, [0, j])
-      drawStatesFromState(lba.LBA.startState)
-    }else if(mode == 1){
-
-      drawStates([lba.LBA.startState], 0)
+      drawStatesFromState(inputObject.LBA.startState)
+    } else if (mode == 1) {
+      drawStates([inputObject.LBA.startState], 0)
       let i = 1
-      for(const state of lba.LBA.states){
-        
-        if(lba.LBA.delta.get(state)){
+
+      for (const state of inputObject.LBA.states) {
+
+        if (inputObject.LBA.delta.get(state)) {
           i++
-          drawStates(lba.LBA.delta.get(state).keys(), i)
+          drawStates(inputObject.LBA.delta.get(state).keys(), i)
         }
       }
     }
-    else{
+    else {
       throw Error("entered wrong mode. Please use 0 for recursive style and 1 for row style")
     }
 
-    for (const state of lba.LBA.states) {
+    //draw transitions from every state in list of states to draw transitions from
+    for(const state of statesToDrawTransitionsFor){
       drawTransitions(state)
     }
 
+    //draw transitions to every state in list of states to draw transitions to
+    for (const key of inputObject.LBA.delta.keys()) {
+      for (const [innerkey, innerValue] of inputObject.LBA.delta.get(key)){
+        if (statesToDrawTransitionsFor.includes(innerkey)) {
+          drawTransition(key, innerkey, innerValue)
+        }
+      }
+    }
+
+
     width += radius + marginX * 2
     height += radius + marginY * 2
-
-    //drawTransition(lba.LBA.startState)
   }
   return (
     <svg width={width} height={height}>
@@ -472,7 +493,7 @@ function App() {
       const kuroda_grammar = convert_to_kuroda(inputGrammar)
 
       const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
-      console.log("LBA", createdLBA.LBA) 
+      console.log("LBA", createdLBA.LBA)
       if (createdLBA.M) {
         console.log("M", createdLBA.M)
       }
@@ -530,15 +551,6 @@ function App() {
     }
 
     return productions
-  }
-
-  function setExample() {
-    const exampleStart = "S"
-    const exampleNonterminals = "S, A, B"
-    const exampleTerminals = "a, b"
-    const exampleProductions = "S->AB,\nAB->ab"
-
-    setUserInput(exampleStart, exampleNonterminals, exampleTerminals, exampleProductions)
   }
 
   /**
@@ -691,7 +703,7 @@ function App() {
               <p>{"start state: " + lbaOutput.LBA.startState}</p>
               <p>{"blank symbol: " + lbaOutput.LBA.blank}</p>
               <p>{"end states: " + lbaOutput.LBA.endStates.join(", ")}</p>
-              
+
               {eliminateBlank && <p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}</p>}
               <div id="output-lba-steps" className="steps-text">
                 <br></br>
@@ -730,7 +742,7 @@ function App() {
           <div className="LBA gui-element">
             <legend>M</legend>
             {(eliminateBlank) && (
-              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode="1"></LbaGraph>
+              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode="1" statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
             )}
           </div>
         </div>
