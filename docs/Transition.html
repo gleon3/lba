@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: Production</title>
+    <title>JSDoc: Class: Transition</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: Production</h1>
+    <h1 class="page-title">Class: Transition</h1>
 
     
 
@@ -28,9 +28,9 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Production<span class="signature">(left, right)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Transition<span class="signature">(fromState, toState, readSymbol, newSymbol, direction)</span><span class="type-signature"></span></h2>
         
-            <div class="class-description"><p>Class representing a production.</p></div>
+            <div class="class-description"><p>Class representing a transition of a Turing Machine.</p></div>
         
     
 </header>
@@ -45,7 +45,7 @@
     
 
     
-    <h4 class="name" id="Production"><span class="type-signature"></span>new Production<span class="signature">(left, right)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Transition"><span class="type-signature"></span>new Transition<span class="signature">(fromState, toState, readSymbol, newSymbol, direction)</span><span class="type-signature"></span></h4>
     
 
     
@@ -53,7 +53,7 @@
 
 
 <div class="description">
-    <p>Create a production.</p>
+    <p>Create a transition.</p>
 </div>
 
 
@@ -89,13 +89,13 @@
 
         <tr>
             
-                <td class="name"><code>left</code></td>
+                <td class="name"><code>fromState</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;String></span>
+<span class="param-type">String</span>
 
 
             
@@ -105,20 +105,20 @@
 
             
 
-            <td class="description last"><p>The left side of the production.</p></td>
+            <td class="description last"><p>The state where the transition starts.</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>right</code></td>
+                <td class="name"><code>toState</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;String></span>
+<span class="param-type">String</span>
 
 
             
@@ -128,7 +128,76 @@
 
             
 
-            <td class="description last"><p>The right side of the production.</p></td>
+            <td class="description last"><p>The state where the transition ends.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>readSymbol</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The symbol that was read on the tape.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>newSymbol</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The symbol that will replace the readSymbol.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>direction</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The direction the head will move to. L for left, N for Neutral, R for right</p></td>
         </tr>
 
     
@@ -169,7 +238,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line30">line 30</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line2">line 2</a>
     </li></ul></dd>
     
 
@@ -207,13 +276,6 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="Production.html">Production</a></dt>
-            <dd></dd>
-        </dl>
-    
 
     
 
@@ -232,270 +294,6 @@
     
 
     
-    <h4 class="name" id="clone"><span class="type-signature"></span>clone<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Production.html">Production</a>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Returns a copy of the production.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line55">line 55</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The copy of the production.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Production.html">Production</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="equals"><span class="type-signature"></span>equals<span class="signature">(production)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Returns a copy of the production.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>production</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>An object of class Production</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line65">line 65</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>True if the object is equal.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
     <h4 class="name" id="toString"><span class="type-signature"></span>toString<span class="signature">()</span><span class="type-signature"> &rarr; {String}</span></h4>
     
 
@@ -504,7 +302,7 @@
 
 
 <div class="description">
-    <p>Returns a String that shows the production.</p>
+    <p>Returns a String that shows the transition.</p>
 </div>
 
 
@@ -548,7 +346,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line46">line 46</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line24">line 24</a>
     </li></ul></dd>
     
 
@@ -577,7 +375,7 @@
 
         
 <div class="param-desc">
-    <p>The production as a String.</p>
+    <p>The transition as a String.</p>
 </div>
 
 
@@ -595,6 +393,182 @@
 </dl>
 
     
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~handleMouseLeave"><span class="type-signature">(inner) </span>handleMouseLeave<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Handles leaving mouse from transition after hovering. Tells compontent that mouse is no longer over transition.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="App.js.html">App.js</a>, <a href="App.js.html#line99">line 99</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~handleMouseOver"><span class="type-signature">(inner) </span>handleMouseOver<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Handles hovering mouse over transition. Tells compontent that mouse is over transition. Removes transition to &quot;redraw&quot; it over other svg elements.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="App.js.html">App.js</a>, <a href="App.js.html#line86">line 86</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

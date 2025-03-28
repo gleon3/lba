@@ -240,15 +240,18 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  * A component that displays a state diagram of a linear bounded automaton.
  *
  * @typedef {Object} LbaGraphProps
- * @property {LBA} lba - The lba that will be represented by the state diagram.
- * @property {Number} radius - The radius that will be used for displaying the states of the lba.
+ * @property {Object} inputObject - The input containing an object that contains lba object and steps that stores information about the steps of the creation of the lba.
+ * @property {Number} radius - The radius that will be used for displaying the states of the lba.LBA.
  * @property {Number} distanceY - The distance between states in the Y Direction.
  * @property {Number} distanceX - The distance between states in the X Direction.
- *
+ * @property {Number} mode - The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1
+ * @property {String[]} statesToDrawTransitionsFor - Only transitions from and to states in this array will be drawn. Default is every state.
+ * 
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
+const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = inputObject.LBA.states }) => {
+
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -280,7 +283,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       y: row * distanceY + marginY,
     }
 
-    if (state === lba.startState) {
+    if (state === inputObject.LBA.startState) {
       //start states have a transition built in, so they need extra space compared to normal states
       row += 1
       height += distanceY
@@ -296,7 +299,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
         &lt;StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}>&lt;/StartState>
       )
     }
-    else if (lba.endStates.includes(state)) {
+    else if (inputObject.LBA.endStates.includes(state)) {
       lbaElements.push(
         &lt;EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}>&lt;/EndState>
       )
@@ -310,7 +313,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
       alreadyDrawn.set(state, [col, row])
     }
 
-    const transitions = lba.delta.get(state)
+    const transitions = inputObject.LBA.delta.get(state)
 
     //there are no more states to draw for this iteration, so exit the function early and do nothing
     if (!transitions)
@@ -330,44 +333,50 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   }
 
   /**
-  * Draws all transitions from a recursively from a given state.
+  * Draws all transitions from a from a given state.
   * 
   * @param {String} state - The state.
   */
   function drawTransitions(state) {
-    if (alreadyDrawn.get(state)) {
-      const stateCol = alreadyDrawn.get(state)[0]
-      const stateRow = alreadyDrawn.get(state)[1]
-
-      const transitions = lba.delta.get(state)
+      const transitions = inputObject.LBA.delta.get(state)
 
       //there are no transitions for the given state, so exit the function early and do nothing
       if (!transitions)
         return
 
       for (let [toState, label] of transitions) {
-        if (alreadyDrawn.get(toState)) {
-          const toStateCol = alreadyDrawn.get(toState)[0]
-          const toStateRow = alreadyDrawn.get(toState)[1]
+        drawTransition(state, toState, label)
+      } 
+  }
 
-          const startPoint = {
-            x: stateCol * distanceX + marginX,
-            y: stateRow * distanceY + marginY,
-          }
+  /**
+  * Draws a transition from one state to another state.
+  * 
+  * @param {String} fromState - The state where the transition begins.
+  * @param {String} toState - The state where the transition ends
+  * @param {String[]} label - The label of the transition
+  */
+  function drawTransition(fromState, toState, label) {
+    if (alreadyDrawn.get(fromState) &amp;&amp; alreadyDrawn.get(toState)) {
+      const stateCol = alreadyDrawn.get(fromState)[0]
+      const stateRow = alreadyDrawn.get(fromState)[1]
 
-          const endPoint = {
-            x: toStateCol * distanceX + marginX,
-            y: toStateRow * distanceY + marginY
-          }
+      const toStateCol = alreadyDrawn.get(toState)[0]
+      const toStateRow = alreadyDrawn.get(toState)[1]
 
-          lbaElements.push(&lt;Transition key={'Transition from state ' + state + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}>&lt;/Transition>)
-        } else {
-          throw new Error("Trying to draw a transition to a state that hasnt been drawn yet!")
-        }
+      const startPoint = {
+        x: stateCol * distanceX + marginX,
+        y: stateRow * distanceY + marginY,
       }
 
+      const endPoint = {
+        x: toStateCol * distanceX + marginX,
+        y: toStateRow * distanceY + marginY
+      }
+
+      lbaElements.push(&lt;Transition key={'Transition from state ' + fromState + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}>&lt;/Transition>)
     } else {
-      throw new Error("Trying to draw transitions from a state that hasnt been drawn yet!" + state)
+      throw new Error("trying to draw from or to state that hasnt been drawn yet: " + fromState + "to" + toState)
     }
   }
 
@@ -379,41 +388,100 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX }) => {
   * @param {Number} row - The index of the row the states are drawn in.
   */
   function drawStates(states, row) {
-    let count = 1
+    if (states.length == 0) {
+      return
+    }
+
+    let count = 0
+
+
     for (let state of states) {
-      const statePosition = {
-        x: count * distanceX,
-        y: row * distanceY
+      const rowInput = row
+
+      const statePoint = {
+        x: count * distanceX + marginX,
+        y: row * distanceY + marginY
       }
 
       if (!alreadyDrawn.get(state)) {
-        alreadyDrawn.set(state, [count, row - 1])
+
+        if (state === inputObject.LBA.startState) {
+          //start states have a transition built in, so they need extra space compared to normal states
+          row += 1
+          height += distanceY
+
+          const startPoint = statePoint
+
+          const startStatePoint = {
+            x: statePoint.x,
+            y: statePoint.y + distanceY,
+          }
+
+          lbaElements.push(
+            &lt;StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}>&lt;/StartState>
+          )
+        }
+        else if (inputObject.LBA.endStates.includes(state)) {
+          lbaElements.push(
+            &lt;EndState key={'end state ' + state} position={statePoint} radius={radius} name={state}>&lt;/EndState>
+          )
+        } else {
+          lbaElements.push(
+            &lt;State key={'state ' + state} position={statePoint} radius={radius} name={state}>&lt;/State>
+          )
+        }
+
+        alreadyDrawn.set(state, [count, row])
+
+        count++
+        width += distanceX
       }
 
-      lbaElements.push(
-        &lt;State position={statePosition} radius={radius} name={state}>&lt;/State>
-      )
-      count++
-      width += distanceX
+      row = rowInput
     }
-    height += row * distanceY
-    row += 1
+    if (count > 0) {
+      height += distanceY
+    }
   }
 
 
-  if (lba) {
-    //alreadyDrawn.set(lba.startState, [0, j])
+  if (inputObject.LBA) {
+    if (mode == 0) {
+      //alreadyDrawn.set(lba.LBA.startState, [0, j])
+      drawStatesFromState(inputObject.LBA.startState)
+    } else if (mode == 1) {
+      drawStates([inputObject.LBA.startState], 0)
+      let i = 1
 
-    drawStatesFromState(lba.startState)
+      for (const state of inputObject.LBA.states) {
 
-    for (const state of lba.states) {
+        if (inputObject.LBA.delta.get(state)) {
+          i++
+          drawStates(inputObject.LBA.delta.get(state).keys(), i)
+        }
+      }
+    }
+    else {
+      throw Error("entered wrong mode. Please use 0 for recursive style and 1 for row style")
+    }
+
+    //draw transitions from every state in list of states to draw transitions from
+    for(const state of statesToDrawTransitionsFor){
       drawTransitions(state)
     }
 
+    //draw transitions to every state in list of states to draw transitions to
+    for (const key of inputObject.LBA.delta.keys()) {
+      for (const [innerkey, innerValue] of inputObject.LBA.delta.get(key)){
+        if (statesToDrawTransitionsFor.includes(innerkey)) {
+          drawTransition(key, innerkey, innerValue)
+        }
+      }
+    }
+
+
     width += radius + marginX * 2
     height += radius + marginY * 2
-
-    //drawTransition(lba.startState)
   }
   return (
     &lt;svg width={width} height={height}>
@@ -433,8 +501,8 @@ function App() {
   const [terminalValue, setTerminalValue] = useState('')
   const [productionValue, setProductionValue] = useState('')
 
-  const [lba, setLBA] = useState('')
-  const [eliminateX, setEliminateX] = useState('')
+  const [lbaOutput, setLbaOutput] = useState('')
+  const [eliminateBlank, setEliminateBlank] = useState('')
 
   const [inputGrammar, setInputGrammar] = useState('')
   const [output, setOutput] = useState('')
@@ -454,10 +522,12 @@ function App() {
 
       const createdLBA = grammar_to_lba(kuroda_grammar.grammar)
       console.log("LBA", createdLBA.LBA)
-      console.log("M", createdLBA.M)
+      if (createdLBA.M) {
+        console.log("M", createdLBA.M)
+      }
 
-      setLBA(createdLBA.LBA)
-      setEliminateX(createdLBA.M)
+      setLbaOutput(createdLBA)
+      setEliminateBlank(createdLBA.M)
 
       setOutput(kuroda_grammar)
     } else {
@@ -467,11 +537,14 @@ function App() {
       }
 
       const createdLBA = grammar_to_lba(grammarObject.grammar)
-      console.log("LBA", createdLBA.LBA)
-      console.log("M", createdLBA.M)
 
-      setLBA(createdLBA.LBA)
-      setEliminateX(createdLBA.M)
+      console.log("LBA", createdLBA.LBA)
+      if (createdLBA.M) {
+        console.log("M", createdLBA.M)
+      }
+
+      setLbaOutput(createdLBA)
+      setEliminateBlank(createdLBA.M)
 
       setOutput(grammarObject)
     }
@@ -508,15 +581,6 @@ function App() {
     return productions
   }
 
-  function setExample() {
-    const exampleStart = "S"
-    const exampleNonterminals = "S, A, B"
-    const exampleTerminals = "a, b"
-    const exampleProductions = "S->AB,\nAB->ab"
-
-    setUserInput(exampleStart, exampleNonterminals, exampleTerminals, exampleProductions)
-  }
-
   /**
      * Sets the user input to the given parameters.
      * @param {String} start - The text to put in the start textarea.
@@ -548,14 +612,14 @@ function App() {
     terminalValue: "a, b",
     productionValue: "S->AS,\nS->BS,\nS->a,\nABAA->AAAB,\nABAB->AABB,\nBAA->AAB,\nBAB->ABB,\nBBA->ABB,\nAA->aa,\nBB->bb"
   }
-  
+
   const example3 = {
     startValue: "S",
     nonterminalValue: "S, A, B",
     terminalValue: "a, b",
     productionValue: "S->AB,\nS->A,\nA->a,\nB->b,\nAB->BA"
-  }  
-  
+  }
+
   const example4 = {
     startValue: "S",
     nonterminalValue: "S, B",
@@ -591,19 +655,17 @@ function App() {
                 const exampleList = document.getElementById("examples")
                 const selected = exampleList.selectedOptions
 
-                if(selected.length > 1){
+                if (selected.length > 1) {
                   throw Error("somehow selected more than 1 option from dropdown menu.")
                 }
 
                 const example = examples[selected[0].value]
 
                 setUserInput(example.startValue, example.nonterminalValue, example.terminalValue, example.productionValue)
-            }}>use example&lt;/button>
+              }}>use example&lt;/button>
           &lt;/div>)}
       &lt;/div>
       {inputGrammar &amp;&amp; (
-        
-          
         &lt;div className="grammar-info gui-element">
           &lt;legend>input-info&lt;/legend>
           &lt;div>
@@ -624,37 +686,91 @@ function App() {
               &lt;p>{"terminals: " + output.grammar.terminals.join(", ")}&lt;/p>
               &lt;p>{"start symbol: " + output.grammar.start}&lt;/p>
               &lt;p>{"productions: " + output.grammar.productions.join(", ")}&lt;/p>
-              &lt;p>{JSON.stringify(output.steps)}&lt;/p>
+              &lt;div id="output-grammar-steps" className="steps-text">
+                &lt;br>&lt;/br>
+                &lt;p>Begin algorithm to convert grammar to kuroda-normalform&lt;/p>
+                {output.steps.map((step, i) => {
+                  return (
+                    &lt;div key={i}>
+                      &lt;p>{"-step " + (i + 1) + " " + step.description}&lt;/p>
+                      &lt;dd>
+                        {!(step.newVariables.length == 0) &amp;&amp; &lt;p>{"introduce new variables " + step.newVariables}&lt;/p>}
+                        {step.newProductions &amp;&amp; &lt;p>{"introduce new productions " + step.newProductions.toString()}&lt;/p>}
+                        {Array.from(step.replacedProductions).map(([key, value], i) => { return &lt;p key={i}>{key.toString() + " replaced with " + value.toString()}&lt;/p> })}
+                      &lt;/dd>
+                    &lt;/div>
+                  )
+                })}
+
+              &lt;/div>
+              &lt;button className="show-steps" id="show-steps-grammar" onClick={() => {
+                const element = document.getElementById("output-grammar-steps")
+
+                if (element.style.display === "block") {
+                  element.style.display = "none";
+                  document.getElementById("show-steps-grammar").innerText = "show steps"
+                } else {
+                  element.style.display = "block"
+                  document.getElementById("show-steps-grammar").innerText = "hide steps"
+                }
+
+              }}>show steps&lt;/button>
             &lt;/div>
           )}
         &lt;/div>
       )}
-      {lba &amp;&amp; (
+      {lbaOutput &amp;&amp; (
         &lt;div>
           &lt;div className="lba-info gui-element">
             &lt;legend>lba-info&lt;/legend>
             &lt;div>
-              &lt;p>{"states: " + lba.states.join(", ")}&lt;/p>
-              &lt;p>{"alphabet: " + lba.inputAlphabet.join(", ")}&lt;/p>
-              &lt;p>{"tape alphabet: " + lba.tapeAlphabet.join(", ")}&lt;/p>
+              &lt;p>{"states: " + lbaOutput.LBA.states.join(", ")}&lt;/p>
+              &lt;p>{"alphabet: " + lbaOutput.LBA.inputAlphabet.join(", ")}&lt;/p>
+              &lt;p>{"tape alphabet: " + lbaOutput.LBA.tapeAlphabet.join(", ")}&lt;/p>
               &lt;p>{"delta: to view delta check the browser console"}&lt;/p>
-              &lt;p>{"start state: " + lba.startState}&lt;/p>
-              &lt;p>{"blank symbol: " + lba.blank}&lt;/p>
-              &lt;p>{"end states: " + lba.endStates.join(", ")}&lt;/p>
-              &lt;br>&lt;/br>
-              &lt;p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}&lt;/p>
+              &lt;p>{"start state: " + lbaOutput.LBA.startState}&lt;/p>
+              &lt;p>{"blank symbol: " + lbaOutput.LBA.blank}&lt;/p>
+              &lt;p>{"end states: " + lbaOutput.LBA.endStates.join(", ")}&lt;/p>
+
+              {eliminateBlank &amp;&amp; &lt;p>{"M simplifies the step to remove the blank symbol for productions in the form of A->BC, check the browser console to view the delta of M"}&lt;/p>}
+              &lt;div id="output-lba-steps" className="steps-text">
+                &lt;br>&lt;/br>
+                &lt;p>Begin algorithm to convert grammar to lba accepting the same language the grammar generates&lt;/p>
+                {Array.from(lbaOutput.steps).map(([key, value], i) => {
+                  return (
+                    &lt;div key={i}>
+                      &lt;p>{"-step " + (i + 1) + " " + key}&lt;/p>
+                      &lt;dd>
+                        &lt;p>{value.newTransitions.toString()}&lt;/p>
+                      &lt;/dd>
+                    &lt;/div>
+                  )
+                })}
+
+              &lt;/div>
+              &lt;button className="show-steps" id="show-steps-lba" onClick={() => {
+                const element = document.getElementById("output-lba-steps")
+
+                if (element.style.display === "block") {
+                  element.style.display = "none";
+                  document.getElementById("show-steps-lba").innerText = "show steps"
+                } else {
+                  element.style.display = "block"
+                  document.getElementById("show-steps-lba").innerText = "hide steps"
+                }
+              }}>show steps&lt;/button>
             &lt;/div>
           &lt;/div>
           &lt;div className="LBA gui-element">
             &lt;legend>Linear Bounded Automaton&lt;/legend>
-            {(lba) &amp;&amp; (
-              &lt;LbaGraph lba={lba} radius={50} distanceX={300} distanceY={300}>&lt;/LbaGraph>
+            {(lbaOutput) &amp;&amp; (
+              &lt;LbaGraph lba={lbaOutput} radius={50} distanceX={300} distanceY={300}>&lt;/LbaGraph>
             )}
           &lt;/div>
           &lt;div className="LBA gui-element">
             &lt;legend>M&lt;/legend>
-            {(eliminateX) &amp;&amp; (
-              &lt;LbaGraph lba={eliminateX} radius={50} distanceX={300} distanceY={300}>&lt;/LbaGraph>
+            {(eliminateBlank) &amp;&amp; (
+              &lt;LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode="1" statesToDrawTransitionsFor={['zin', 'zout', 'S']}>&lt;/LbaGraph>
             )}
           &lt;/div>
         &lt;/div>
@@ -683,13 +799,13 @@ export default App;</code></pre>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_x">lba_eliminate_x</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li><li><a href="Transition.html">Transition</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#createTranisition">createTranisition</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_blank">lba_eliminate_blank</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Mar 27 2025 15:15:15 GMT+0100 (Mitteleuropäische Normalzeit)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Mar 28 2025 04:12:16 GMT+0100 (Mitteleuropäische Normalzeit)
 </footer>
 
 <script> prettyPrint(); </script>

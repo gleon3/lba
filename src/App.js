@@ -123,9 +123,9 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
           <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
         <path d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' q 125 -12.5 0 -25'} stroke={isFocused ? "red" : "#aaa"} fill="none" strokeWidth={2} markerEnd={"url(#arrow" + urlString + ")"} />
-        <text fill={isFocused ? "red" : "black"} x={transitionStart.x} y={transitionStart.y - radius} textAnchor="middle">{
+        <text fill={isFocused ? "red" : "black"} x={transitionStart.x} y={transitionStart.y} textAnchor="middle">{
           label.map(value => {
-            return <tspan key={value} x={transitionStart.x + 2 * radius} dy='13'>{value}</tspan>
+            return <tspan key={value} x={transitionStart.x + radius} dy='13'>{value}</tspan>
           })
         }
         </text>
@@ -222,8 +222,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = inputObject.LBA.states }) => {
-
+const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, statesToDrawTransitionsFor = inputObject.LBA.states }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -310,16 +309,18 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, st
   * @param {String} state - The state.
   */
   function drawTransitions(state) {
-      const transitions = inputObject.LBA.delta.get(state)
+    const transitions = inputObject.LBA.delta.get(state)
 
-      //there are no transitions for the given state, so exit the function early and do nothing
-      if (!transitions)
-        return
+    //there are no transitions for the given state, so exit the function early and do nothing
+    if (!transitions)
+      return
 
-      for (let [toState, label] of transitions) {
-        drawTransition(state, toState, label)
-      } 
+    for (let [toState, label] of transitions) {
+      drawTransition(state, toState, label)
+    }
   }
+
+  let transitionCount = 0
 
   /**
   * Draws a transition from one state to another state.
@@ -346,7 +347,8 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, st
         y: toStateRow * distanceY + marginY
       }
 
-      lbaElements.push(<Transition key={'Transition from state ' + fromState + ' to ' + toState} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
+      transitionCount += 1
+      lbaElements.push(<Transition key={transitionCount} startPoint={startPoint} endPoint={endPoint} radius={radius} label={label}></Transition>)
     } else {
       throw new Error("trying to draw from or to state that hasnt been drawn yet: " + fromState + "to" + toState)
     }
@@ -360,7 +362,7 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, st
   * @param {Number} row - The index of the row the states are drawn in.
   */
   function drawStates(states, row) {
-    if (states.length == 0) {
+    if (states.length === 0) {
       return
     }
 
@@ -418,10 +420,10 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, st
 
 
   if (inputObject.LBA) {
-    if (mode == 0) {
+    if (mode === 0) {
       //alreadyDrawn.set(lba.LBA.startState, [0, j])
       drawStatesFromState(inputObject.LBA.startState)
-    } else if (mode == 1) {
+    } else if (mode === 1) {
       drawStates([inputObject.LBA.startState], 0)
       let i = 1
 
@@ -438,13 +440,13 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode = 0, st
     }
 
     //draw transitions from every state in list of states to draw transitions from
-    for(const state of statesToDrawTransitionsFor){
+    for (const state of statesToDrawTransitionsFor) {
       drawTransitions(state)
     }
 
     //draw transitions to every state in list of states to draw transitions to
     for (const key of inputObject.LBA.delta.keys()) {
-      for (const [innerkey, innerValue] of inputObject.LBA.delta.get(key)){
+      for (const [innerkey, innerValue] of inputObject.LBA.delta.get(key)) {
         if (statesToDrawTransitionsFor.includes(innerkey)) {
           drawTransition(key, innerkey, innerValue)
         }
@@ -522,32 +524,53 @@ function App() {
     }
   }
 
-  function handleStartValue(startValue) {
-    //TODO: check if startValue input is correct
+  function handleStartValue(startValue, nonterminals) {
+    if(!nonterminals.includes(startValue)){
+      throw new Error("start symbol has to be part of nonterminals")
+    }
+
+    startValue = startValue.trim()
+
+    if(startValue.includes(',') || startValue.includes("-") || startValue.includes('>')){
+      throw new Error('Dont use , - or > in start value')
+    }else{
+      return startValue
+    }
   }
 
-  function handleNonterminals(nonterminals) {
-    //TODO: check if nonterminals input is correct
-  }
+  function handleSymbols(nonterminals, terminals) {
+    if(terminals.startValue.includes("-") || terminals.includes('>')){
+      throw new Error('Dont use , - or > in terminals')
+    }
 
-  function handleTerminals(terminals) {
-    //TODO: check if terminals input is correct
+    if(nonterminals.startValue.includes("-") || nonterminals.includes('>')){
+      throw new Error('Dont use , - or > in nonterminals')
+    }
+
+    const filteredArray = terminals.filter(value => nonterminals.includes(value))
+
+    if(filteredArray.length > 0){
+      throw new Error("the intersection between terminals and nonterminals has to be empty")
+    } 
   }
 
   function handleProductions(productionsString) {
-    //TODO: check if production input is correct
-
     let productions = []
 
     for (let prod of productionsString) {
       prod = prod.trim()
 
-      const left = prod.split('->')[0]
-      const right = prod.split('->')[1]
+      try {
+        const left = prod.split('->')[0]
+        const right = prod.split('->')[1]
 
-      const production = new Production(left.split(''), right.split(''))
+        const production = new Production(left.split(''), right.split(''))
 
-      productions.push(production)
+        productions.push(production)
+      }catch{
+        //return error
+        throw Error("please input grammar productions in the form l->r")
+      }
     }
 
     return productions
@@ -666,7 +689,7 @@ function App() {
                     <div key={i}>
                       <p>{"-step " + (i + 1) + " " + step.description}</p>
                       <dd>
-                        {!(step.newVariables.length == 0) && <p>{"introduce new variables " + step.newVariables}</p>}
+                        {!(step.newVariables.length === 0) && <p>{"introduce new variables " + step.newVariables}</p>}
                         {step.newProductions && <p>{"introduce new productions " + step.newProductions.toString()}</p>}
                         {Array.from(step.replacedProductions).map(([key, value], i) => { return <p key={i}>{key.toString() + " replaced with " + value.toString()}</p> })}
                       </dd>
@@ -742,7 +765,7 @@ function App() {
           <div className="LBA gui-element">
             <legend>M</legend>
             {(eliminateBlank) && (
-              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode="1" statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
+              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode={1} statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
             )}
           </div>
         </div>

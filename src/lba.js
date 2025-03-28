@@ -1,5 +1,5 @@
 /** Class representing a transition of a Turing Machine. */
-class Transition{
+class Transition {
     /**
      * Create a transition.
      * @param {String} fromState - The state where the transition starts.
@@ -8,7 +8,7 @@ class Transition{
      * @param {String} newSymbol - The symbol that will replace the readSymbol.
      * @param {String} direction - The direction the head will move to. L for left, N for Neutral, R for right
      */
-    constructor(fromState, toState,readSymbol, newSymbol, direction) {
+    constructor(fromState, toState, readSymbol, newSymbol, direction) {
         this.fromState = fromState
         this.toState = toState
         this.readSymbol = readSymbol
@@ -21,8 +21,8 @@ class Transition{
      * 
      * @return {String} The transition as a String.
      */
-    toString(){
-        return("ẟ(" + this.fromState + ',' + this.readSymbol + ') = (' + this.toState + ' : ' + this.newSymbol + ', ' + this.direction + ') ')
+    toString() {
+        return ("ẟ(" + this.fromState + ',' + this.readSymbol + ') = (' + this.toState + ' : ' + this.newSymbol + ', ' + this.direction + ') ')
     }
 }
 
@@ -115,10 +115,10 @@ class LBA {
      */
     constructor(grammar, startState, leftEndmarker, rightEndmarker, blank) {
         this.leftEndmarker = leftEndmarker
-        this.rightEndmarker = rightEndmarker 
+        this.rightEndmarker = rightEndmarker
         this.states = [startState];
-        this.inputAlphabet = grammar.terminals.concat(grammar.nonterminals);
-        this.tapeAlphabet = this.inputAlphabet.concat([leftEndmarker, rightEndmarker, blank]);
+        this.inputAlphabet = grammar.terminals.concat(grammar.nonterminals).concat([leftEndmarker, rightEndmarker]);
+        this.tapeAlphabet = this.inputAlphabet.concat([blank]);
         this.startState = startState;
         this.blank = blank
         this.delta = new Map();
@@ -132,6 +132,22 @@ class LBA {
     add_transition(transition) {
         const fromState = transition.fromState
         const toState = transition.toState
+
+        //LBA never moves head to left on left endmarker
+        if (transition.readSymbol === this.leftEndmarker && transition.direction === 'L') {
+            return
+        }
+
+        //LBA never moves head to right endmarker
+        if (transition.readSymbol === this.rightEndmarker && transition.direction === 'R') {
+            return
+        }
+
+        //LBA never overwrites endmarkers
+        if ((transition.readSymbol === this.leftEndmarker && transition.newSymbol !== this.leftEndmarker) ||
+            ((transition.readSymbol === this.rightEndmarker && transition.newSymbol !== this.rightEndmarker))) {
+            return
+        }
 
         const label = transition.readSymbol + " : " + transition.newSymbol + ", " + transition.direction
 
@@ -163,7 +179,7 @@ class LBA {
 
             return state
         } else {
-            if (this.states.length == 0) {
+            if (this.states.length === 0) {
                 throw Error("somehow added state to empty lba without startstate in states")
             }
 
@@ -551,7 +567,7 @@ export function grammar_to_lba(grammar) {
 
                 eliminateBlank = lba_eliminate_blank(grammar)
                 steps.set('M - eliminate Blank', eliminateBlank.steps)
-                
+
                 const transition6 = new Transition('M', 'z0', lba.leftEndmarker, lba.leftEndmarker, 'R')
                 lba.add_transition(transition6)
                 addedTransitions.push(transition6)
@@ -570,7 +586,7 @@ export function grammar_to_lba(grammar) {
         steps.set(production, step)
     }
 
-    
+
     const newState1 = lba.add_state()
 
     const transitionEnd1 = new Transition('z0', newState1, lba.rightEndmarker, lba.rightEndmarker, 'L')
@@ -616,15 +632,22 @@ export function lba_eliminate_blank(grammar) {
     const newTransitions = []
 
     for (let symbol of TM.inputAlphabet) {
+        if (symbol === TM.rightEndmarker || symbol === TM.leftEndmarker) {
+            continue
+        }
         const newStateSymbol = TM.add_state(symbol)
         newStates.push(newStateSymbol)
 
-        
+
         const transition1 = new Transition('zin', newStateSymbol, symbol, TM.leftEndmarker, 'R')
         TM.add_transition(transition1)
         newTransitions.push(transition1)
 
         for (let innerSymbol of TM.inputAlphabet) {
+            if (symbol === TM.rightEndmarker || symbol === TM.leftEndmarker) {
+                continue
+            }
+
             const transition2 = new Transition(symbol, innerSymbol, innerSymbol, symbol, 'R')
             TM.add_transition(transition2)
             newTransitions.push(transition2)
@@ -647,15 +670,6 @@ export function lba_eliminate_blank(grammar) {
         LBA: TM,
         steps: step
     }
-}
-
-/**
-* Creates an object representing a transition .
-* @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
-* @return {LBA} A linear bounded automaton that overwrites the blank symbol.
-*/
-function createTranisition() {
-
 }
 
 /*

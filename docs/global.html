@@ -156,7 +156,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="App.js.html">App.js</a>, <a href="App.js.html#line402">line 402</a>
+        <a href="App.js.html">App.js</a>, <a href="App.js.html#line470">line 470</a>
     </li></ul></dd>
     
 
@@ -311,7 +311,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line173">line 173</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line210">line 210</a>
     </li></ul></dd>
     
 
@@ -352,6 +352,165 @@
     <dd>
         
 <span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="createTranisition"><span class="type-signature"></span>createTranisition<span class="signature">(grammar)</span><span class="type-signature"> &rarr; {<a href="LBA.html">LBA</a>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Creates an object representing a transition .</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>grammar</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Grammar.html">Grammar</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A type 1 grammar in kuroda normalform.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line657">line 657</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>A linear bounded automaton that overwrites the blank symbol.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="LBA.html">LBA</a></span>
 
 
     </dd>
@@ -470,7 +629,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line403">line 403</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line436">line 436</a>
     </li></ul></dd>
     
 
@@ -499,7 +658,7 @@
 
         
 <div class="param-desc">
-    <p>An Object containing the linear bounded automaton and the step to eliminate the blank symbol (can be undefined for grammars that dont change the word length).</p>
+    <p>An Object containing the linear bounded automaton, the productions mapped to the added transitions and the step to eliminate the blank symbol (can be undefined for grammars that dont change the word length).</p>
 </div>
 
 
@@ -629,7 +788,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line155">line 155</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line192">line 192</a>
     </li></ul></dd>
     
 
@@ -687,7 +846,7 @@
     
 
     
-    <h4 class="name" id="lba_eliminate_x"><span class="type-signature"></span>lba_eliminate_x<span class="signature">(grammar)</span><span class="type-signature"> &rarr; {<a href="LBA.html">LBA</a>}</span></h4>
+    <h4 class="name" id="lba_eliminate_blank"><span class="type-signature"></span>lba_eliminate_blank<span class="signature">(grammar)</span><span class="type-signature"> &rarr; {<a href="LBA.html">LBA</a>}</span></h4>
     
 
     
@@ -788,7 +947,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line499">line 499</a>
+        <a href="lba.js.html">lba.js</a>, <a href="lba.js.html#line612">line 612</a>
     </li></ul></dd>
     
 
@@ -1069,13 +1228,13 @@
 
         <tr>
             
-                <td class="name"><code>lba</code></td>
+                <td class="name"><code>inputObject</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="LBA.html">LBA</a></span>
+<span class="param-type">Object</span>
 
 
             
@@ -1085,7 +1244,7 @@
 
             
 
-            <td class="description last"><p>The lba that will be represented by the state diagram.</p></td>
+            <td class="description last"><p>The input containing an object that contains lba object and steps that stores information about the steps of the creation of the lba.</p></td>
         </tr>
 
     
@@ -1108,7 +1267,7 @@
 
             
 
-            <td class="description last"><p>The radius that will be used for displaying the states of the lba.</p></td>
+            <td class="description last"><p>The radius that will be used for displaying the states of the lba.LBA.</p></td>
         </tr>
 
     
@@ -1155,6 +1314,52 @@
             
 
             <td class="description last"><p>The distance between states in the X Direction.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>mode</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>statesToDrawTransitionsFor</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;String></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Only transitions from and to states in this array will be drawn. Default is every state.</p></td>
         </tr>
 
     
@@ -1779,13 +1984,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_x">lba_eliminate_x</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li><li><a href="Transition.html">Transition</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#createTranisition">createTranisition</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_blank">lba_eliminate_blank</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Mar 27 2025 15:15:15 GMT+0100 (Mitteleuropäische Normalzeit)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Mar 28 2025 04:12:16 GMT+0100 (Mitteleuropäische Normalzeit)
 </footer>
 
 <script> prettyPrint(); </script>
