@@ -256,7 +256,7 @@ export function convert_to_kuroda(inputGrammar) {
             grammar.productions[i] = new Production(production.left.map(item => item === old_symbol ? new_variable : item), production.right.map(item => item === old_symbol ? new_variable : item))
             console.log(old_symbol, new Production(production.left.map(item => item === old_symbol ? new_variable : item), production.right.map(item => item === old_symbol ? new_variable : item)))
 
-            if (!old.equals(production)) {
+            if (!old.equals(grammar.productions[i])) {
                 seperateTerminals.replacedProductions.set(old, production.clone())
             }
         }
