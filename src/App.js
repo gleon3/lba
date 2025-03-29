@@ -132,7 +132,7 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
       </svg>
     )
   }
-  else if (startPoint.x === endPoint.x && startPoint.y >= endPoint.y) { //transition to earlier already drawn state on the same column
+  else if (startPoint.x === endPoint.x && Math.abs(endPoint.y - startPoint.y) > 400) { //transition to earlier already drawn state on the same column
     const transitionStart = {
       x: startPoint.x - radius,
       y: startPoint.y
@@ -218,11 +218,12 @@ const Transition = ({ startPoint, endPoint, radius, label }) => {
  * @property {Number} distanceX - The distance between states in the X Direction.
  * @property {Number} mode - The style in which the states will be drawn. Default is 0 - recursively from the start state. Other options are 1
  * @property {String[]} statesToDrawTransitionsFor - Only transitions from and to states in this array will be drawn. Default is every state.
+ * @property {boolean} blankStep - True if lba is procedure to remove blank symbol from tape.
  * 
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, statesToDrawTransitionsFor = inputObject.LBA.states }) => {
+const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, statesToDrawTransitionsFor = inputObject.LBA.states, blankStep = false }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -407,8 +408,13 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, stat
 
         alreadyDrawn.set(state, [count, row])
 
+        if (width < count * distanceX) {
+          width += distanceX
+        }
+
         count++
-        width += distanceX
+
+        
       }
 
       row = rowInput
@@ -426,6 +432,10 @@ const LbaGraph = ({ lba: inputObject, radius, distanceY, distanceX, mode=0, stat
     } else if (mode === 1) {
       drawStates([inputObject.LBA.startState], 0)
       let i = 1
+
+      if(blankStep){
+        drawStates(['zout'], 3)
+      }
 
       for (const state of inputObject.LBA.states) {
 
@@ -532,11 +542,16 @@ function App() {
   }
 
   function handleStartValue(startValue, nonterminals) {
+    startValue = startValue.trim()
+
+    if(startValue === ""){
+      throw new Error("no start symbol has been input. please input a start symbol")
+    }
+
     if(!nonterminals.includes(startValue)){
       throw new Error("start symbol has to be part of nonterminals")
     }
 
-    startValue = startValue.trim()
 
     if(startValue.includes(',') || startValue.includes("-") || startValue.includes('>')){
       throw new Error('Dont use , - or > in start value')
@@ -703,7 +718,7 @@ function App() {
                 {output.steps.map((step, i) => {
                   return (
                     <div key={i}>
-                      <p>{"-step " + (i + 1) + " " + step.description}</p>
+                      <p>{"-step " + step.description}</p>
                       <dd>
                         {!(step.newVariables.length === 0) && <p>{"introduce new variables " + step.newVariables}</p>}
                         {step.newProductions && <p>{"introduce new productions " + step.newProductions.toString()}</p>}
@@ -750,7 +765,7 @@ function App() {
                 {Array.from(lbaOutput.steps).map(([key, value], i) => {
                   return (
                     <div key={i}>
-                      <p>{"-step " + (i + 1) + " " + key}</p>
+                      <p>{"-step " + key}</p>
                       <dd>
                         <p>{value.newTransitions.toString()}</p>
                       </dd>
@@ -781,7 +796,7 @@ function App() {
           <div className="LBA gui-element">
             <legend>M</legend>
             {(eliminateBlank) && (
-              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode={1} statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
+              <LbaGraph lba={eliminateBlank} radius={50} distanceX={300} distanceY={300} mode={1} blankStep={true} statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
             )}
           </div>
         </div>
