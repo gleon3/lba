@@ -248,16 +248,14 @@ export function convert_to_kuroda(inputGrammar) {
         seperateTerminals.newVariables.push(new_variable)
 
         for (let i = 0; i < grammar.productions.length; i++) {
-            const production = grammar.productions[i]
-
-            const old = production.clone()
+            const old = grammar.productions[i].clone()
 
             //replace nonterminal in left and right side of production
-            grammar.productions[i] = new Production(production.left.map(item => item === old_symbol ? new_variable : item), production.right.map(item => item === old_symbol ? new_variable : item))
-            console.log(old_symbol, new Production(production.left.map(item => item === old_symbol ? new_variable : item), production.right.map(item => item === old_symbol ? new_variable : item)))
+            grammar.productions[i] = new Production(grammar.productions[i].left.map(item => item === old_symbol ? new_variable : item), grammar.productions[i].right.map(item => item === old_symbol ? new_variable : item))
+            console.log(old_symbol, new Production(grammar.productions[i].left.map(item => item === old_symbol ? new_variable : item), grammar.productions[i].right.map(item => item === old_symbol ? new_variable : item)))
 
             if (!old.equals(grammar.productions[i])) {
-                seperateTerminals.replacedProductions.set(old, production.clone())
+                seperateTerminals.replacedProductions.set(grammar.productions[i], grammar.productions[i].clone())
             }
         }
 
