@@ -1,14 +1,22 @@
 import React from "react";
 import { useState, useRef } from "react";
 import './App.css';
-import { Production, Grammar, isContextSenstive, isKuroda, convertToKuroda, grammarToLba } from "./lba.js";
+import { lba, Production, LBA , Grammar, getKurodaGrammar, grammarToLBA } from "./lba.js";
+
+/** Class representing a point on a coordinate system. */
+class Point {
+  constructor(x, y) {
+    this.x = x
+    this.y = y
+  }
+}
 
 /**
  * A component that displays a start state.
  * 
  * @typedef {Object} StartStateProps
- * @property {Object} startPosition - The x and y position of the start point of the transition going into the start state.
- * @property {Object} statePosition - The x and y position of the start state.
+ * @property {Point} startPosition - The x and y position of the start point of the transition going into the start state.
+ * @property {Point} statePosition - The x and y position of the start state.
  * @property {Number} radius - The radius of the outer circle of the state.
  * @property {String} name - The name of the state.
  *
@@ -19,7 +27,7 @@ const StartState = ({ startPosition, statePosition, radius, name }) => {
   return (
     <svg>
       <State position={statePosition} radius={radius} name={name}></State>
-      <Edge startPoint={startPosition} endPoint={statePosition} radius={radius} weight={["start"]}></Edge>
+      <Edge startPoint={startPosition} endPoint={statePosition} radius={radius} weight={["Start"]}></Edge>
     </svg>
   )
 }
@@ -28,7 +36,7 @@ const StartState = ({ startPosition, statePosition, radius, name }) => {
  * A component that displays a state.
  *
  * @typedef {Object} StateProps
- * @property {Object} position - The x and y position of the state.
+ * @property {Point} position - The x and y position of the state.
  * @property {Number} radius - The radius of the outer circle of the state.
  * @property {String} name - The name of the string.
  *
@@ -39,7 +47,7 @@ const State = ({ position, radius, name }) => {
   return (
     <svg>
       <circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
-      <text x={position.x} y={position.y} textAnchor="middle">{name}</text>
+      <text font-size={50} x={position.x} y={position.y} textAnchor="middle" dominant-baseline="middle">{name}</text>
     </svg>
   )
 }
@@ -48,7 +56,7 @@ const State = ({ position, radius, name }) => {
  * A component that displays a end state.
  *
  * @typedef {Object} EndStateProps
- * @property {Object} position - The x and y position of the state.
+ * @property {Point} position - The x and y position of the state.
  * @property {Number} radius - The radius of the outer circle of the state.
  * @property {String} name - The name of the end state.
  *
@@ -101,10 +109,10 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
   }
 
   if (startPoint.x === endPoint.x && startPoint.y === endPoint.y) { //self transition
-    const transitionStart = {
-      x: startPoint.x + radius,
-      y: startPoint.y
-    }
+    const transitionStart = new Point(
+      startPoint.x + radius,
+      startPoint.y
+    )
 
     const transitionEnd = transitionStart
 
@@ -132,16 +140,21 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
       </svg>
     )
   }
-  else if (startPoint.x === endPoint.x && Math.abs(endPoint.y - startPoint.y) > 400) { //transition to earlier already drawn state on the same column
-    const transitionStart = {
-      x: startPoint.x - radius,
-      y: startPoint.y
-    }
+  else if (startPoint.y === endPoint.y){ //transition state on the same row
+    let directionX = (startPoint.x <= endPoint.x) ? 1 : -1
 
-    const transitionEnd = {
-      x: endPoint.x - radius,
-      y: endPoint.y
-    }
+    const angle = 1.4
+
+    const transitionStart = new Point(
+      startPoint.x - radius * Math.cos(angle) * directionX,
+      startPoint.y - radius*Math.sin(angle) * directionX 
+    )
+
+
+    const transitionEnd = new Point(
+      endPoint.x - radius * Math.cos(angle) * directionX,
+      endPoint.y - radius*Math.sin(angle) * directionX 
+    )
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
@@ -157,7 +170,48 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
           orient="auto-start-reverse">
           <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
-        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionStart.x - 2 * radius) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((transitionStart.x + transitionEnd.x)/2)  + ' ' + (transitionStart.y  - radius*directionX * Math.abs((endPoint.x - startPoint.x)/300)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
+        <text fill={isFocused ? "red" : "black"} textAnchor="middle">
+          <textPath href={"#" + urlString} startOffset="50%">{
+            weight.map(element => {
+              return <tspan key={element} x='0' dy='15'>{element}</tspan>
+            })}
+          </textPath>
+        </text>
+      </svg>
+    )
+  }
+  else if (startPoint.x === endPoint.x) { //transition to state on the same column
+    let directionY = (startPoint.y <= endPoint.y) ? 1 : -1
+
+    const angle = 1.4
+
+    const transitionStart = new Point(
+      startPoint.x + radius * Math.cos(angle) * directionY,
+      startPoint.y + radius*Math.sin(angle) * directionY 
+    )
+
+
+    const transitionEnd = new Point(
+      endPoint.x + radius * Math.cos(angle) * directionY,
+      endPoint.y - radius*Math.sin(angle) * directionY 
+    )
+
+    const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
+
+    return (
+      <svg ref={elementRef} pointerEvents="stroke" onMouseOver={() => handleMouseOver(urlString)} onMouseLeave={() => handleMouseLeave()}>
+        <marker
+          id={"arrow" + urlString}
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse">
+          <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionEnd.x + radius * directionY * (Math.abs((endPoint.y-startPoint.y)/(400)) ) ) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
         <text fill={isFocused ? "red" : "black"} textAnchor="middle">
           <textPath href={"#" + urlString} startOffset="50%">{
             weight.map(element => {
@@ -171,15 +225,15 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
     const directionX = (startPoint.x <= endPoint.x) ? 1 : -1
     const directionY = (startPoint.y <= endPoint.y) ? 1 : -1
 
-    const transitionStart = {
-      x: startPoint.x,
-      y: startPoint.y + radius * directionY
-    }
+    const transitionStart = new Point(
+      startPoint.x,
+      startPoint.y + radius * directionY
+    )
 
-    const transitionEnd = {
-      x: endPoint.x,
-      y: endPoint.y - radius * directionY
-    }
+    const transitionEnd = new Point(
+      endPoint.x,
+      endPoint.y - radius * directionY
+    )
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
 
@@ -223,7 +277,7 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDrawTransitionsFor = lba.states, blankStep = false }) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = lba.states, blankStep = false }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -250,10 +304,9 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
       height += distanceY
     }
 
-    const statePoint = {
-      x: col * distanceX + marginX,
-      y: row * distanceY + marginY,
-    }
+    const statePoint = new Point(
+      col * distanceX + marginX,
+      row * distanceY + marginY)
 
     if (state === lba.startState) {
       //start states have a transition built in, so they need extra space compared to normal states
@@ -262,10 +315,9 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
 
       const startPoint = statePoint
 
-      const startStatePoint = {
-        x: statePoint.x,
-        y: statePoint.y + distanceY,
-      }
+      const startStatePoint = new Point(
+        statePoint.x,
+        statePoint.y + distanceY)
 
       lbaElements.push(
         <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
@@ -338,15 +390,15 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
       const toStateCol = alreadyDrawn.get(toState)[0]
       const toStateRow = alreadyDrawn.get(toState)[1]
 
-      const startPoint = {
-        x: stateCol * distanceX + marginX,
-        y: stateRow * distanceY + marginY,
-      }
+      const startPoint = new Point(
+        stateCol * distanceX + marginX,
+        stateRow * distanceY + marginY
+      )
 
-      const endPoint = {
-        x: toStateCol * distanceX + marginX,
-        y: toStateRow * distanceY + marginY
-      }
+      const endPoint = new Point(
+        toStateCol * distanceX + marginX,
+        toStateRow * distanceY + marginY
+      )
 
       transitionCount += 1
       lbaElements.push(<Edge key={transitionCount} startPoint={startPoint} endPoint={endPoint} radius={radius} weight={label}></Edge>)
@@ -373,10 +425,9 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
     for (let state of states) {
       const rowInput = row
 
-      const statePoint = {
-        x: count * distanceX + marginX,
-        y: row * distanceY + marginY
-      }
+      const statePoint = new Point(
+        count * distanceX + marginX,
+        row * distanceY + marginY)
 
       if (!alreadyDrawn.get(state)) {
 
@@ -387,10 +438,10 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
 
           const startPoint = statePoint
 
-          const startStatePoint = {
-            x: statePoint.x,
-            y: statePoint.y + distanceY,
-          }
+          const startStatePoint = new Point(
+            statePoint.x,
+            statePoint.y + distanceY,
+          )
 
           lbaElements.push(
             <StartState key={'start state ' + state} startPosition={startPoint} statePosition={startStatePoint} radius={radius} name={state}></StartState>
@@ -414,7 +465,7 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
 
         count++
 
-        
+
       }
 
       row = rowInput
@@ -433,7 +484,7 @@ const LbaGraph = ({ lba : lba, radius, distanceY, distanceX, mode=0, statesToDra
       drawStates([lba.startState], 0)
       let i = 1
 
-      if(blankStep){
+      if (blankStep) {
         drawStates(['zout'], 3)
       }
 
@@ -494,7 +545,7 @@ function App() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    try{
+    try {
       const nonterminals = nonterminalValue.split(' ').join('').split(',')
       const terminals = terminalValue.split(' ').join('').split(',')
       handleSymbols(nonterminals, terminals)
@@ -503,45 +554,25 @@ function App() {
       const productions = handleProductions(productionValue.split(' ').join('').split(','))
 
       const inputGrammar = new Grammar(nonterminals, terminals, productions, start)
-
-      if(!isContextSenstive(inputGrammar)){
-        throw new Error("Input grammar is not from type 1. Please input a context-senstive grammar.")
-      }
-
       setInputGrammar(inputGrammar)
 
-      if (!isKuroda(inputGrammar)) {
-        const kuroda_grammar = convertToKuroda(inputGrammar)
 
-        const createdLBA = grammarToLba(kuroda_grammar.grammar)
-        console.log("LBA", createdLBA.LBA)
-        if (createdLBA.M) {
-          console.log("M", createdLBA.M.LBA)
-        }
+      const kurodaGrammar = getKurodaGrammar(inputGrammar)
 
-        setLbaOutput(createdLBA)
-        setEliminateBlank(createdLBA.M)
-
-        setOutput(kuroda_grammar)
-      } else {
-        const grammarObject = {
-          steps: [],
-          grammar: inputGrammar
-        }
-
-        const createdLBA = grammarToLba(grammarObject.grammar)
-
-        console.log("LBA", createdLBA.LBA)
-        if (createdLBA.M) {
-          console.log("M", createdLBA.M.LBA)
-        }
-
-        setLbaOutput(createdLBA)
-        setEliminateBlank(createdLBA.M)
-
-        setOutput(grammarObject)
+      console.log(kurodaGrammar)
+      
+      const createdLBA = grammarToLBA(kurodaGrammar.grammar)
+      console.log("LBA", createdLBA.LBA)
+      if (createdLBA.M) {
+        console.log("M", createdLBA.M.LBA)
       }
-    }catch(e){
+
+
+      setOutput(kurodaGrammar)
+      setLbaOutput(createdLBA)
+      setEliminateBlank(createdLBA.M)
+    } catch (e) {
+      console.trace("Message");
       alert(e)
     }
   }
@@ -549,34 +580,34 @@ function App() {
   function handleStartValue(startValue, nonterminals) {
     startValue = startValue.trim()
 
-    if(startValue === ""){
+    if (startValue === "") {
       throw new Error("no start symbol has been input. please input a start symbol")
     }
 
-    if(!nonterminals.includes(startValue)){
+    if (!nonterminals.includes(startValue)) {
       throw new Error("start symbol has to be part of nonterminals")
     }
 
 
-    if(startValue.includes(',') || startValue.includes("-") || startValue.includes('>')){
+    if (startValue.includes(',') || startValue.includes("-") || startValue.includes('>')) {
       throw new Error('Dont use , - or > in start value')
-    }else{
+    } else {
       return startValue
     }
   }
 
   function handleSymbols(nonterminals, terminals) {
-    if(terminals.includes("-") || terminals.includes('>')){
+    if (terminals.includes("-") || terminals.includes('>')) {
       throw new Error('Dont use - or > in terminals')
     }
 
-    if(nonterminals.includes("-") || nonterminals.includes('>')){
+    if (nonterminals.includes("-") || nonterminals.includes('>')) {
       throw new Error('Dont use - or > in nonterminals')
     }
 
     const filteredArray = terminals.filter(value => nonterminals.includes(value))
 
-    if(filteredArray.length > 0){
+    if (filteredArray.length > 0) {
       throw new Error("the intersection between terminals and nonterminals has to be empty")
     }
   }
@@ -596,14 +627,18 @@ function App() {
         const left = prod.split('->')[0]
         const right = prod.split('->')[1]
 
-        if(left === "" || right === ""){
+        if (left === "" || right === "") {
           throw new Error("productions has no left or right side. please input productions in the form l->r")
+        }
+
+        if(right.includes("|")){
+          throw new Error("| is not yet supported, please input the productions manually with a , inbetween")
         }
 
         const production = new Production(left.split(''), right.split(''))
 
         productions.push(production)
-      }catch{
+      } catch {
         //return error
         throw Error("please input grammar productions in the form l->r")
       }
@@ -660,6 +695,9 @@ function App() {
 
   const examples = [example1, example2, example3, example4]
 
+  /*const point = new Point(100, 100)
+  const point2 = new Point(400, 250)
+  const label = "Start"*/
 
   return (
     <div>
@@ -710,7 +748,7 @@ function App() {
       {output && (
         <div className="grammar-info gui-element">
           <legend>grammar-info</legend>
-          <p>{(inputGrammar === output.grammar ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.")}</p>
+          <p>{(output.steps.length === 0 ? "The Grammar is already in Kuroda-Normalform." : "The Grammar was converted to Kuroda-Normalform.")}</p>
           {(inputGrammar !== output.grammar) && (
             <div>
               <p>{"nonterminals: " + output.grammar.nonterminals.join(", ")}</p>
@@ -804,6 +842,20 @@ function App() {
               <LbaGraph lba={eliminateBlank.LBA} radius={50} distanceX={300} distanceY={300} mode={1} blankStep={true} statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
             )}
           </div>
+          <div className="LBA gui-element">
+            <legend>Test</legend>
+            {(eliminateBlank) && (
+              <div>
+                <svg width={1000} height={1000}>
+                <Edge startPoint={new Point(50, 50)} endPoint={new Point(200, 200)} radius={50} weight={["test"]}>
+                  
+                </Edge>
+                <State position={new Point(500 ,100)} radius={50} name="z1"></State>
+                </svg>
+              </div>
+            )}
+          </div>
+          <LbaGraph lba={lba} distanceY={300} distanceX={300} radius={50}></LbaGraph>
         </div>
       )}
     </div>

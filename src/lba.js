@@ -211,7 +211,7 @@ class LBA {
  * @param {Grammar} grammar - A type 1 grammar.
  * @return {boolean} True if grammar is of type 1.
  */
-export function isContextSenstive(grammar) {
+function isContextSenstive(grammar) {
     for (let production of grammar.productions) {
         if(production.left.length > production.right.length){
             return false
@@ -225,7 +225,7 @@ export function isContextSenstive(grammar) {
  * @param {Grammar} grammar - A type 1 grammar.
  * @return {boolean} True if grammar is in Kuroda normalform.
  */
-export function isKuroda(grammar) {
+function isKuroda(grammar) {
     for (let production of grammar.productions) {
         if ((production.left.length === 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length === 1) ||
             (production.left.length === 1 && grammar.nonterminals.includes(production.left[0]) && production.right.length === 2 && grammar.nonterminals.includes(production.right[0]) && grammar.nonterminals.includes(production.right[1])) ||
@@ -239,20 +239,36 @@ export function isKuroda(grammar) {
 }
 
 /**
- * Converts the given type 1 grammar to kuroda normalform.
+ * Returns the given type 1 grammar in kuroda normalform.
  * @param {Grammar} inputGrammar - A type 1 grammar.
  * @return {Object} An object containing the type 1 grammar in kuroda normalform and an Array containing objects containing information about the process of the algorithm.
  */
-export function convertToKuroda(inputGrammar) {
-    //make a copy of the grammar object to not edit the input grammars parameters
-    let grammar = new Grammar(Array.from(inputGrammar.nonterminals), Array.from(inputGrammar.terminals), Array.from(inputGrammar.productions), inputGrammar.start)
+export function getKurodaGrammar(inputGrammar) {
+    if(!isContextSenstive(inputGrammar)){
+        throw new Error("Input grammar is not from type 1. Please input a context-senstive grammar.")
+    }
+
+    if(isKuroda(inputGrammar)){
+        return {
+            grammar: inputGrammar,
+            steps: []
+        }
+    }
+
+    //create copy of inputGrammar, so we dont edit the input
+    const nonterminals = inputGrammar.nonterminals.map((nonterminal) => nonterminal)
+    const terminals = inputGrammar.terminals.map((terminal) => terminal)
+    const productions = inputGrammar.productions.map((production) => production.clone())
+    const startValue = inputGrammar.start
+
+    const grammar = new Grammar(nonterminals, terminals, productions, startValue)
 
     //create productions in the form A->a and A->B by seperating the terminals from the rest of the productions
     const seperateTerminals = {
         description: "seperate terminals, create rules in the form A->B and A->a",
         newVariables: [],
-        replacedProductions: new Map(),
-        newProductions: []
+        newProductions: [],
+        replacedProductions: new Map()
     }
 
     for (const terminal of grammar.terminals) {
@@ -269,7 +285,7 @@ export function convertToKuroda(inputGrammar) {
             grammar.productions[i] = new Production(grammar.productions[i].left.map(item => item === old_symbol ? new_variable : item), grammar.productions[i].right.map(item => item === old_symbol ? new_variable : item))
 
             if (!old.equals(grammar.productions[i])) {
-                seperateTerminals.replacedProductions.set(grammar.productions[i], grammar.productions[i].clone())
+                seperateTerminals.replacedProductions.set(old, grammar.productions[i].clone())
             }
         }
 
@@ -315,7 +331,7 @@ export function convertToKuroda(inputGrammar) {
             }
 
             //Cn-2->Bn-1Bn
-            const newProduction3 = new Production(["C" + (n - 2)], [grammar.productions[i].right[n - 2], grammar.productions[i].right[n - 1]])
+            const newProduction3 = new Production(["C" +  (index + n - 2)], [grammar.productions[i].right[n - 2], grammar.productions[i].right[n - 1]])
             newProductions.push(newProduction3)
             grammar.productions.push(newProduction3)
 
@@ -469,7 +485,12 @@ export function convertToKuroda(inputGrammar) {
  * @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
  * @return {Object} An Object containing the linear bounded automaton, the productions mapped to the added transitions and the step to eliminate the blank symbol (can be undefined for grammars that dont change the word length).
  */
-export function grammarToLba(grammar) {
+export function grammarToLBA(grammar) {
+    /*
+    if(!isKuroda(grammar)){
+        throw Error("this method only works for grammars in kuroda normal form. please use a grammar in kuroda normal form")
+    }*/
+
     const lba = new LBA(grammar, 'zs', '<', '>', 'x')
     let eliminateBlank
 
@@ -744,7 +765,7 @@ AA->aa,
 BB->bb
 */
 
-/*example code from thesis
+/*example code from thesis*/
 const terminals = ["a", "b"]
 const nonterminals = ["A", "B"]
 const startValue = "S"
@@ -758,7 +779,7 @@ const leftEndmarker = "<"
 const rightEndmarker = ">"
 const blank = "x"
 
-const lba = new LBA(grammar, startState, leftEndmarker, rightEndmarker, blank)
+export const lba = new LBA(grammar, startState, leftEndmarker, rightEndmarker, blank)
 
 lba.addState()
 lba.addState()
@@ -774,4 +795,16 @@ for(const symbol of lba.tapeAlphabet){
 
 lba.addTransition(new Transition("z1", "z0", 
                                  lba.leftEndmarker, lba.leftEndmarker, "R"))
-*/
+
+const kurodaOutput = getKurodaGrammar(grammar)
+
+const kurodaGrammar = kurodaOutput.grammar
+const getKurodaGrammarSteps = kurodaOutput.steps
+
+const lbaObject = grammarToLBA(kurodaGrammar)
+
+const createdLBA =  lbaObject.LBA
+const eliminateBlank = lbaObject.M
+const grammarToLBASteps = lbaObject.steps
+
+console.log(createdLBA)
