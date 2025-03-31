@@ -2,6 +2,10 @@
 
 Web Application to transform context-sensitive grammars to linear bounded automata. The website is available at: https://gleon3.github.io/lba/
 
+### `npm install`
+
+To install dependencies. 
+
 ## Available Scripts
 
 In the project directory, you can run:
