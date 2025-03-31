@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import './App.css';
-import { lba, Production, LBA , Grammar, getKurodaGrammar, grammarToLBA } from "./lba.js";
+import { lba, Production, Grammar, getKurodaGrammar, grammarToLBA } from "./lba.js";
 
 /** Class representing a point on a coordinate system. */
 class Point {
@@ -277,7 +277,7 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = lba.states, blankStep = false }) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = lba.states}) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -483,10 +483,6 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTra
     } else if (mode === 1) {
       drawStates([lba.startState], 0)
       let i = 1
-
-      if (blankStep) {
-        drawStates(['zout'], 3)
-      }
 
       for (const state of lba.states) {
 
@@ -839,23 +835,10 @@ function App() {
           <div className="LBA gui-element">
             <legend>M</legend>
             {(eliminateBlank) && (
-              <LbaGraph lba={eliminateBlank.LBA} radius={50} distanceX={300} distanceY={300} mode={1} blankStep={true} statesToDrawTransitionsFor={['zin', 'zout', 'S']}></LbaGraph>
+              <LbaGraph lba={eliminateBlank.LBA} radius={50} distanceX={300} distanceY={300} mode={1}></LbaGraph>
             )}
           </div>
-          <div className="LBA gui-element">
-            <legend>Test</legend>
-            {(eliminateBlank) && (
-              <div>
-                <svg width={1000} height={1000}>
-                <Edge startPoint={new Point(50, 50)} endPoint={new Point(200, 200)} radius={50} weight={["test"]}>
-                  
-                </Edge>
-                <State position={new Point(500 ,100)} radius={50} name="z1"></State>
-                </svg>
-              </div>
-            )}
-          </div>
-          <LbaGraph lba={lba} distanceY={300} distanceX={300} radius={50}></LbaGraph>
+            <LbaGraph lba={lba} distanceY={300} distanceX={300} radius={50}></LbaGraph>
         </div>
       )}
     </div>
