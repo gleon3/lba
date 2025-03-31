@@ -765,7 +765,7 @@ AA->aa,
 BB->bb
 */
 
-/*example code from thesis*/
+/*example code from thesis
 const terminals = ["a", "b"]
 const nonterminals = ["A", "B"]
 const startValue = "S"
@@ -808,3 +808,4 @@ const eliminateBlank = lbaObject.M
 const grammarToLBASteps = lbaObject.steps
 
 console.log(createdLBA)
+*/

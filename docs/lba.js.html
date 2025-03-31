@@ -27,7 +27,7 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/** Class representing a transition of a Turing Machine. */
-class Transition{
+export class Transition {
     /**
      * Create a transition.
      * @param {String} fromState - The state where the transition starts.
@@ -36,12 +36,13 @@ class Transition{
      * @param {String} newSymbol - The symbol that will replace the readSymbol.
      * @param {String} direction - The direction the head will move to. L for left, N for Neutral, R for right
      */
-    constructor(fromState, toState,readSymbol, newSymbol, direction) {
+    constructor(fromState, toState, readSymbol, newSymbol, direction) {
         this.fromState = fromState
         this.toState = toState
         this.readSymbol = readSymbol
         this.newSymbol = newSymbol
         this.direction = direction
+        this.edgeLabel = readSymbol + ' : ' + newSymbol + ', ' + direction
     }
 
     /**
@@ -49,8 +50,8 @@ class Transition{
      * 
      * @return {String} The transition as a String.
      */
-    toString(){
-        return("ẟ(" + this.fromState + ',' + this.readSymbol + ') = (' + this.toState + ' : ' + this.newSymbol + ', ' + this.direction + ') ')
+    toString() {
+        return (" ẟ(" + this.fromState + ',' + this.readSymbol + ') = (' + this.toState + ' : ' + this.newSymbol + ', ' + this.direction + ')')
     }
 }
 
@@ -143,25 +144,46 @@ class LBA {
      */
     constructor(grammar, startState, leftEndmarker, rightEndmarker, blank) {
         this.leftEndmarker = leftEndmarker
-        this.rightEndmarker = rightEndmarker 
-        this.states = [startState];
-        this.inputAlphabet = grammar.terminals.concat(grammar.nonterminals);
-        this.tapeAlphabet = this.inputAlphabet.concat([leftEndmarker, rightEndmarker, blank]);
-        this.startState = startState;
+        this.rightEndmarker = rightEndmarker
+        this.states = [startState]
+        this.inputAlphabet = grammar.terminals.concat(grammar.nonterminals).concat([leftEndmarker, rightEndmarker])
+        this.tapeAlphabet = this.inputAlphabet.concat([blank])
+        this.startState = startState
         this.blank = blank
-        this.delta = new Map();
-        this.endStates = [];
+        this.delta = new Map()
+        this.endStates = []
     }
 
     /**
      * Adds a transition to the lba.
      * @param {Transition} transition - The transition to add.
      */
-    add_transition(transition) {
+    addTransition(transition) {
         const fromState = transition.fromState
         const toState = transition.toState
 
-        const label = transition.readSymbol + " : " + transition.newSymbol + ", " + transition.direction
+        const label = transition.edgeLabel
+
+        //LBA never moves head to left on left endmarker
+        if (transition.readSymbol === this.leftEndmarker &amp;&amp; transition.direction === 'L') {
+            return
+        }
+
+        //LBA never moves head to right endmarker
+        if (transition.readSymbol === this.rightEndmarker &amp;&amp; transition.direction === 'R') {
+            return
+        }
+
+        //LBA never overwrites endmarkers
+        if ((transition.readSymbol === this.leftEndmarker &amp;&amp; transition.newSymbol !== this.leftEndmarker) ||
+            ((transition.readSymbol === this.rightEndmarker &amp;&amp; transition.newSymbol !== this.rightEndmarker))) {
+            return
+        }
+
+        //LBA stops when in end state
+        if (this.endStates.includes(fromState)) {
+            return
+        }
 
         if (this.delta.get(fromState)) {
             if (this.delta.get(fromState).get(toState)) {
@@ -185,13 +207,13 @@ class LBA {
      * @param {String} [state] - The name of the state to be added to the lba (is optional). If no name is provided the index is the amount of states - 1 (as counting starts at 0).
      * @return {state} The state that was added to the lba.
      */
-    add_state(state = null) {
+    addState(state = null) {
         if (state) {
             this.states.push(state)
 
             return state
         } else {
-            if (this.states.length == 0) {
+            if (this.states.length === 0) {
                 throw Error("somehow added state to empty lba without startstate in states")
             }
 
@@ -207,9 +229,23 @@ class LBA {
      * Adds a end state to the lba.
      * @param {String} state - The end state to add to the lba.
      */
-    add_endState(state) {
+    addEndState(state) {
         this.endStates.push(state)
     }
+}
+
+/**
+ * Checks if grammar is of typ 1.
+ * @param {Grammar} grammar - A type 1 grammar.
+ * @return {boolean} True if grammar is of type 1.
+ */
+function isContextSenstive(grammar) {
+    for (let production of grammar.productions) {
+        if(production.left.length > production.right.length){
+            return false
+        } 
+    }
+    return true
 }
 
 /**
@@ -217,7 +253,7 @@ class LBA {
  * @param {Grammar} grammar - A type 1 grammar.
  * @return {boolean} True if grammar is in Kuroda normalform.
  */
-export function is_kuroda(grammar) {
+function isKuroda(grammar) {
     for (let production of grammar.productions) {
         if ((production.left.length === 1 &amp;&amp; grammar.nonterminals.includes(production.left[0]) &amp;&amp; production.right.length === 1) ||
             (production.left.length === 1 &amp;&amp; grammar.nonterminals.includes(production.left[0]) &amp;&amp; production.right.length === 2 &amp;&amp; grammar.nonterminals.includes(production.right[0]) &amp;&amp; grammar.nonterminals.includes(production.right[1])) ||
@@ -231,20 +267,36 @@ export function is_kuroda(grammar) {
 }
 
 /**
- * Converts the given type 1 grammar to kuroda normalform.
+ * Returns the given type 1 grammar in kuroda normalform.
  * @param {Grammar} inputGrammar - A type 1 grammar.
  * @return {Object} An object containing the type 1 grammar in kuroda normalform and an Array containing objects containing information about the process of the algorithm.
  */
-export function convert_to_kuroda(inputGrammar) {
-    //make a copy of the grammar object to not edit the input grammars parameters
-    let grammar = new Grammar(Array.from(inputGrammar.nonterminals), Array.from(inputGrammar.terminals), Array.from(inputGrammar.productions), inputGrammar.start)
+export function getKurodaGrammar(inputGrammar) {
+    if(!isContextSenstive(inputGrammar)){
+        throw new Error("Input grammar is not from type 1. Please input a context-senstive grammar.")
+    }
+
+    if(isKuroda(inputGrammar)){
+        return {
+            grammar: inputGrammar,
+            steps: []
+        }
+    }
+
+    //create copy of inputGrammar, so we dont edit the input
+    const nonterminals = inputGrammar.nonterminals.map((nonterminal) => nonterminal)
+    const terminals = inputGrammar.terminals.map((terminal) => terminal)
+    const productions = inputGrammar.productions.map((production) => production.clone())
+    const startValue = inputGrammar.start
+
+    const grammar = new Grammar(nonterminals, terminals, productions, startValue)
 
     //create productions in the form A->a and A->B by seperating the terminals from the rest of the productions
     const seperateTerminals = {
-        description: "seperate terminals",
+        description: "seperate terminals, create rules in the form A->B and A->a",
         newVariables: [],
-        replacedProductions: new Map(),
-        newProductions: []
+        newProductions: [],
+        replacedProductions: new Map()
     }
 
     for (const terminal of grammar.terminals) {
@@ -254,14 +306,14 @@ export function convert_to_kuroda(inputGrammar) {
         grammar.nonterminals.push(new_variable)
         seperateTerminals.newVariables.push(new_variable)
 
-        for (let production of grammar.productions) {
-            const old = production.clone()
+        for (let i = 0; i &lt; grammar.productions.length; i++) {
+            const old = grammar.productions[i].clone()
 
             //replace nonterminal in left and right side of production
-            production = new Production(production.left.map(item => item === old_symbol ? new_variable : item), production.right.map(item => item === old_symbol ? new_variable : item))
+            grammar.productions[i] = new Production(grammar.productions[i].left.map(item => item === old_symbol ? new_variable : item), grammar.productions[i].right.map(item => item === old_symbol ? new_variable : item))
 
-            if (!old.equals(production)) {
-                seperateTerminals.replacedProductions.set(old, production.clone())
+            if (!old.equals(grammar.productions[i])) {
+                seperateTerminals.replacedProductions.set(old, grammar.productions[i].clone())
             }
         }
 
@@ -274,7 +326,7 @@ export function convert_to_kuroda(inputGrammar) {
 
     //create productions in the form A->BC by splitting up the right sides of the productions
     const splitRightSides = {
-        description: "split right sides",
+        description: "split right sides, create rules in the form A->BC",
         newVariables: [],
         replacedProductions: new Map()
     }
@@ -307,7 +359,7 @@ export function convert_to_kuroda(inputGrammar) {
             }
 
             //Cn-2->Bn-1Bn
-            const newProduction3 = new Production(["C" + (n - 2)], [grammar.productions[i].right[n - 2], grammar.productions[i].right[n - 1]])
+            const newProduction3 = new Production(["C" +  (index + n - 2)], [grammar.productions[i].right[n - 2], grammar.productions[i].right[n - 1]])
             newProductions.push(newProduction3)
             grammar.productions.push(newProduction3)
 
@@ -322,7 +374,7 @@ export function convert_to_kuroda(inputGrammar) {
     index = 0
     //create productions in the form AB->CD by removing chain rules
     const removeChainRules = {
-        description: "remove chain rules",
+        description: "remove chain rules, create rules in the form AB->CD",
         newVariables: [],
         replacedProductions: new Map()
     }
@@ -461,7 +513,12 @@ export function convert_to_kuroda(inputGrammar) {
  * @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
  * @return {Object} An Object containing the linear bounded automaton, the productions mapped to the added transitions and the step to eliminate the blank symbol (can be undefined for grammars that dont change the word length).
  */
-export function grammar_to_lba(grammar) {
+export function grammarToLBA(grammar) {
+    /*
+    if(!isKuroda(grammar)){
+        throw Error("this method only works for grammars in kuroda normal form. please use a grammar in kuroda normal form")
+    }*/
+
     const lba = new LBA(grammar, 'zs', '&lt;', '>', 'x')
     let eliminateBlank
 
@@ -469,14 +526,14 @@ export function grammar_to_lba(grammar) {
 
     const startTransitions = []
 
-    lba.add_state('z0')
+    lba.addState('z0')
     const transitionStart1 = new Transition('zs', 'z0', '&lt;', '&lt;', 'R')
-    lba.add_transition(transitionStart1)
+    lba.addTransition(transitionStart1)
     startTransitions.push(transitionStart1)
 
     for (let symbol of lba.tapeAlphabet) {
         const transitionStart2 = new Transition('z0', 'z0', symbol, symbol, 'R')
-        lba.add_transition(transitionStart2)
+        lba.addTransition(transitionStart2)
         startTransitions.push(transitionStart2)
     }
 
@@ -492,96 +549,102 @@ export function grammar_to_lba(grammar) {
         const addedTransitions = []
 
         if (production.right.length === 1) {
-            //for A->a or A->B replace current symbol with A
-            //(z,a) -> (z,A,R)
-            //(z,B) -> (z,B,R)
-
-            const newState = lba.add_state()
+            //for A->a replace a with A
+            const newState = lba.addState()
             addedStates.push(newState)
             const transition1 = new Transition('z0', newState, production.right[0], production.left[0], 'L')
-            lba.add_transition(transition1)
+            lba.addTransition(transition1)
             addedTransitions.push(transition1)
 
             for (let symbol of lba.tapeAlphabet) {
                 const transition2 = new Transition(newState, newState, symbol, symbol, 'L')
-                lba.add_transition(transition2)
+                lba.addTransition(transition2)
                 addedTransitions.push(transition2)
             }
 
             const transition3 = new Transition(newState, 'z0', lba.leftEndmarker, lba.leftEndmarker, 'R')
-            lba.add_transition(transition3)
+            lba.addTransition(transition3)
             addedTransitions.push(transition3)
         } else if (production.right.length === 2) {
             if (production.left.length === 2) {
-                const addedStates = []
-                const addedTransitions = []
-
-                //for AB->CD, write B, change head to left, write A 
-                //(z,C) -> (z,A,R)
-                const newState1 = lba.add_state()
+                //for AB->CD replace CD with AB
+                const newState1 = lba.addState()
                 addedStates.push(newState1)
 
-                const transition1 = new Transition('z0', newState1, production.right[0], production.left[0], 'R')
-                lba.add_transition(transition1)
-                addedTransitions.push(transition1)
-
-                // if B (z,D) -> (z,B,R)
-                const newState2 = lba.add_state()
-                addedStates.push(newState2)
-
-                const transition2 = new Transition(newState1, newState2, production.right[1], production.left[1], 'L')
-                lba.add_transition(transition2)
-                addedTransitions.push(transition2)
-
-                for (let symbol of lba.tapeAlphabet) {
-                    const transition3 = new Transition(newState2, newState2, symbol, symbol, 'L')
-                    lba.add_transition(transition3)
-                    addedTransitions.push(transition3)
-                }
-
-                const transition4 = new Transition(newState2, 'z0', lba.leftEndmarker, lba.leftEndmarker, 'L')
-                lba.add_transition(transition4)
-                addedTransitions.push(transition4)
-
-            } else if (production.left.length === 1) {
-                const newState1 = lba.add_state()
-                addedStates.push(newState1)
-
+                //save C in state and move head to right, so we can ensure that C is on the left of head
                 const transition1 = new Transition('z0', newState1, production.right[0], production.right[0], 'R')
-                lba.add_transition(transition1)
+                lba.addTransition(transition1)
                 addedTransitions.push(transition1)
 
-                const newState2 = lba.add_state()
+                const newState2 = lba.addState()
                 addedStates.push(newState2)
 
-                const transition2 = new Transition(newState1, newState2, production.right[1], production.left[0], 'L')
-                lba.add_transition(transition2)
+                //write B if head reads D and move left
+                const transition2 = new Transition(newState1, newState2, production.right[1], production.left[1], 'L')
+                lba.addTransition(transition2)
                 addedTransitions.push(transition2)
 
-                const newState3 = lba.add_state()
+                const newState3 = lba.addState()
                 addedStates.push(newState3)
 
-                const transition3 = new Transition(newState2, newState3, production.right[0], lba.blank, 'L')
-                lba.add_transition(transition3)
+                //write A if head reads C
+                const transition3 = new Transition(newState2, newState3, production.right[0], production.left[0], 'L')
+                lba.addTransition(transition3)
                 addedTransitions.push(transition3)
 
                 for (let symbol of lba.tapeAlphabet) {
                     const transition4 = new Transition(newState3, newState3, symbol, symbol, 'L')
-                    lba.add_transition(transition4)
+                    lba.addTransition(transition4)
+                    addedTransitions.push(transition4)
+                }
+
+                const transition4 = new Transition(newState3, 'z0', lba.leftEndmarker, lba.leftEndmarker, 'R')
+                lba.addTransition(transition4)
+                addedTransitions.push(transition4)
+
+            } else if (production.left.length === 1) {
+                //for A->BC replace BC with xA and then use step to eliminate x (x = Blank)
+                const newState1 = lba.addState()
+                addedStates.push(newState1)
+
+
+                //save B in state and move head to right, so we can ensure that C is on the left of head
+                const transition1 = new Transition('z0', newState1, production.right[0], production.right[0], 'R')
+                lba.addTransition(transition1)
+                addedTransitions.push(transition1)
+
+                const newState2 = lba.addState()
+                addedStates.push(newState2)
+
+                //write A if head reads C and move left
+                const transition2 = new Transition(newState1, newState2, production.right[1], production.left[0], 'L')
+                lba.addTransition(transition2)
+                addedTransitions.push(transition2)
+
+                const newState3 = lba.addState()
+                addedStates.push(newState3)
+
+                //write x if head reads B and move left
+                const transition3 = new Transition(newState2, newState3, production.right[0], lba.blank, 'L')
+                lba.addTransition(transition3)
+                addedTransitions.push(transition3)
+
+                for (let symbol of lba.tapeAlphabet) {
+                    const transition4 = new Transition(newState3, newState3, symbol, symbol, 'L')
+                    lba.addTransition(transition4)
                     addedTransitions.push(transition4)
                 }
 
                 addedStates.push('M')
 
                 const transition5 = new Transition(newState3, 'M', lba.leftEndmarker, lba.leftEndmarker, 'R')
-                lba.add_transition(transition5)
+                lba.addTransition(transition5)
                 addedTransitions.push(transition5)
 
-                eliminateBlank = lba_eliminate_blank(grammar)
-                steps.set('M - eliminate Blank', eliminateBlank.steps)
-                
+                eliminateBlank = lbaEliminateBlank(grammar)
+
                 const transition6 = new Transition('M', 'z0', lba.leftEndmarker, lba.leftEndmarker, 'R')
-                lba.add_transition(transition6)
+                lba.addTransition(transition6)
                 addedTransitions.push(transition6)
             } else {
                 throw new Error('not in kuroda normalform')
@@ -596,23 +659,24 @@ export function grammar_to_lba(grammar) {
         }
 
         steps.set(production, step)
+
     }
 
-    
-    const newState1 = lba.add_state()
+
+    const newState1 = lba.addState()
 
     const transitionEnd1 = new Transition('z0', newState1, lba.rightEndmarker, lba.rightEndmarker, 'L')
-    lba.add_transition(transitionEnd1)
+    lba.addTransition(transitionEnd1)
 
-    const newState2 = lba.add_state()
+    const newState2 = lba.addState()
     const transitionEnd2 = new Transition(newState1, newState2, grammar.start, grammar.start, 'L')
-    lba.add_transition(transitionEnd2)
+    lba.addTransition(transitionEnd2)
 
     //final state
-    const newState3 = lba.add_state()
-    lba.add_endState(newState3)
+    const newState3 = lba.addState()
+    lba.addEndState(newState3)
     const transitionEnd3 = new Transition(newState2, newState3, lba.leftEndmarker, lba.leftEndmarker, 'N')
-    lba.add_transition(transitionEnd3)
+    lba.addTransition(transitionEnd3)
 
     const endStep = {
         newVariables: [newState1, newState2, newState3],
@@ -622,7 +686,8 @@ export function grammar_to_lba(grammar) {
     steps.set('end', endStep)
 
     if (eliminateBlank) {
-        lba.add_state('M')
+        lba.addState('M')
+        steps.set('M - eliminate Blank', eliminateBlank.steps)
     }
 
     return {
@@ -637,34 +702,57 @@ export function grammar_to_lba(grammar) {
  * @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
  * @return {LBA} A linear bounded automaton that overwrites the blank symbol.
  */
-export function lba_eliminate_blank(grammar) {
-    let TM = new LBA(grammar, 'zin', '&lt;', '>', 'x')
+export function lbaEliminateBlank(grammar) {
+    const startState = 'zin'
 
-    const newStates = ['zin']
+    let TM = new LBA(grammar, startState, '&lt;', '>', 'x')
+
+    const newStates = [startState]
     const newTransitions = []
 
+    const outState = TM.addState('zout')
+    //if first symbol is blank we need transition to endstate
+    const transition1 = new Transition(startState, outState, TM.blank, TM.leftEndmarker, 'R')
+    TM.addTransition(transition1)
+    newTransitions.push(transition1)
+
     for (let symbol of TM.inputAlphabet) {
-        const newStateSymbol = TM.add_state(symbol)
+        if (symbol === TM.rightEndmarker || symbol === TM.leftEndmarker) {
+            continue
+        }
+        const newStateSymbol = TM.addState(symbol)
         newStates.push(newStateSymbol)
 
-        
-        const transition1 = new Transition('zin', newStateSymbol, symbol, TM.leftEndmarker, 'R')
-        TM.add_transition(transition1)
-        newTransitions.push(transition1)
+
+        const transition2 = new Transition('zin', newStateSymbol, symbol, TM.leftEndmarker, 'R')
+        TM.addTransition(transition2)
+        newTransitions.push(transition2)
 
         for (let innerSymbol of TM.inputAlphabet) {
-            const transition2 = new Transition(symbol, innerSymbol, innerSymbol, symbol, 'R')
-            TM.add_transition(transition2)
-            newTransitions.push(transition2)
+            if (innerSymbol === TM.rightEndmarker || innerSymbol === TM.leftEndmarker) {
+                continue
+            }
+
+            const transition3 = new Transition(symbol, innerSymbol, innerSymbol, symbol, 'R')
+            TM.addTransition(transition3)
+            newTransitions.push(transition3)
         }
 
-        const outState = TM.add_state('zout')
-        newStates.push(outState)
 
-        const transition3 = new Transition(newStateSymbol, outState, TM.blank, symbol, 'R')
-        TM.add_transition(transition3)
-        newTransitions.push(transition3)
+
+        const transition4 = new Transition(newStateSymbol, outState, TM.blank, symbol, 'R')
+        TM.addTransition(transition4)
+        newTransitions.push(transition4)
     }
+
+    for (let symbol of TM.tapeAlphabet) {
+        const transition5 = new Transition(outState, outState, symbol, symbol, 'L')
+        TM.addTransition(transition5)
+        newTransitions.push(transition5)
+    }
+
+
+    newStates.push(outState)
 
     const step = {
         newStates: newStates,
@@ -677,59 +765,22 @@ export function lba_eliminate_blank(grammar) {
     }
 }
 
-/**
-* Creates an object representing a transition .
-* @param {Grammar} grammar - A type 1 grammar in kuroda normalform.
-* @return {LBA} A linear bounded automaton that overwrites the blank symbol.
-*/
-function createTranisition() {
+/* example grammar 1
+S->AB,
+AB->ab
 
-}
-
-/*
-const nonterminals = ['S', 'B']
-const terminals = ['a', 'b', 'c']
-const start = 'S'
-let productions = [new Production(['S'], ['a', 'S', 'B', 'c']), 
-                new Production(['S'], ['a', 'b', 'c']),
-                new Production(['c', 'B'], ['B', 'c']),  
-                new Production(['b', 'B'], ['b', 'b']) 
-            ]
-let productions2 = [new Production(['S', 'B'], ['a', 'S', 'B', 'c']), 
-        ]
-let productions3 = [new Production(['S', 'B', 'a', 'b'], ['a', 'S', 'B', 'c']), 
-    ]
-
-console.log('old grammar:')
-for(let production of productions){
-    console.log(production.left + " -> " + production.right)
-}
-
-const grammar = convert_to_kuroda(new Grammar(nonterminals, terminals, productions, start))
-
-console.log('\nnew grammar:')
-for(let production of grammar.productions){
-    console.log(production.left + " -> " + production.right)
-}
-
-const lba = grammar_to_lba(grammar)
-
-console.log(lba)
+other example grammars
 S->aSBc,
 S->abc,
 cB->Bc,
 bB->bb
-*/
 
-/*
 S->AB,
 S->A,
 A->a,
 B->b,
 AB->BA
- */
 
-/*
 S->AS,
 S->BS,
 S->a,
@@ -742,9 +793,49 @@ AA->aa,
 BB->bb
 */
 
-/* example 1
-S->AB,
-AB->ab
+/*example code from thesis
+const terminals = ["a", "b"]
+const nonterminals = ["A", "B"]
+const startValue = "S"
+const productions = [new Production(["S"], ["A", "B"]),
+new Production(["A", "B"], ["a", "b"])]
+
+const grammar = new Grammar(nonterminals, terminals, productions, startValue)
+
+const startState = "zs"
+const leftEndmarker = "&lt;"
+const rightEndmarker = ">"
+const blank = "x"
+
+export const lba = new LBA(grammar, startState, leftEndmarker, rightEndmarker, blank)
+
+lba.addState()
+lba.addState()
+lba.addTransition(new Transition("zs", "z0", 
+                                 lba.leftEndmarker, lba.leftEndmarker, "R"))
+lba.addTransition(new Transition("z0", "z1", 
+                                 "a", "A", "L"))
+
+for(const symbol of lba.tapeAlphabet){
+    lba.addTransition(new Transition("z1", "z1", 
+                                     symbol, symbol, "L"))
+}
+
+lba.addTransition(new Transition("z1", "z0", 
+                                 lba.leftEndmarker, lba.leftEndmarker, "R"))
+
+const kurodaOutput = getKurodaGrammar(grammar)
+
+const kurodaGrammar = kurodaOutput.grammar
+const getKurodaGrammarSteps = kurodaOutput.steps
+
+const lbaObject = grammarToLBA(kurodaGrammar)
+
+const createdLBA =  lbaObject.LBA
+const eliminateBlank = lbaObject.M
+const grammarToLBASteps = lbaObject.steps
+
+console.log(createdLBA)
 */</code></pre>
         </article>
     </section>
@@ -755,13 +846,13 @@ AB->ab
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Production.html">Production</a></li><li><a href="Transition.html">Transition</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#convert_to_kuroda">convert_to_kuroda</a></li><li><a href="global.html#createTranisition">createTranisition</a></li><li><a href="global.html#grammar_to_lba">grammar_to_lba</a></li><li><a href="global.html#is_kuroda">is_kuroda</a></li><li><a href="global.html#lba_eliminate_blank">lba_eliminate_blank</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Grammar.html">Grammar</a></li><li><a href="LBA.html">LBA</a></li><li><a href="Point.html">Point</a></li><li><a href="Production.html">Production</a></li><li><a href="Transition.html">Transition</a></li></ul><h3>Global</h3><ul><li><a href="global.html#App">App</a></li><li><a href="global.html#getKurodaGrammar">getKurodaGrammar</a></li><li><a href="global.html#grammarToLBA">grammarToLBA</a></li><li><a href="global.html#isContextSenstive">isContextSenstive</a></li><li><a href="global.html#isKuroda">isKuroda</a></li><li><a href="global.html#lbaEliminateBlank">lbaEliminateBlank</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Mar 28 2025 04:12:16 GMT+0100 (Mitteleuropäische Normalzeit)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Mar 31 2025 05:45:29 GMT+0200 (Mitteleuropäische Sommerzeit)
 </footer>
 
 <script> prettyPrint(); </script>

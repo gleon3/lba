@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import './App.css';
-import { lba, Production, Grammar, getKurodaGrammar, grammarToLBA } from "./lba.js";
+import { Production, Grammar, getKurodaGrammar, grammarToLBA } from "./lba.js";
 
 /** Class representing a point on a coordinate system. */
 class Point {
@@ -47,7 +47,7 @@ const State = ({ position, radius, name }) => {
   return (
     <svg>
       <circle cx={position.x} cy={position.y} r={radius} fill="none" stroke="black" />
-      <text font-size={50} x={position.x} y={position.y} textAnchor="middle" dominant-baseline="middle">{name}</text>
+      <text fontSize={50} x={position.x} y={position.y} textAnchor="middle" dominantBaseline="middle">{name}</text>
     </svg>
   )
 }
@@ -140,20 +140,20 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
       </svg>
     )
   }
-  else if (startPoint.y === endPoint.y){ //transition state on the same row
+  else if (startPoint.y === endPoint.y) { //transition state on the same row
     let directionX = (startPoint.x <= endPoint.x) ? 1 : -1
 
     const angle = 1.4
 
     const transitionStart = new Point(
       startPoint.x - radius * Math.cos(angle) * directionX,
-      startPoint.y - radius*Math.sin(angle) * directionX 
+      startPoint.y - radius * Math.sin(angle) * directionX
     )
 
 
     const transitionEnd = new Point(
       endPoint.x - radius * Math.cos(angle) * directionX,
-      endPoint.y - radius*Math.sin(angle) * directionX 
+      endPoint.y - radius * Math.sin(angle) * directionX
     )
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
@@ -170,7 +170,7 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
           orient="auto-start-reverse">
           <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
-        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((transitionStart.x + transitionEnd.x)/2)  + ' ' + (transitionStart.y  - radius*directionX * Math.abs((endPoint.x - startPoint.x)/300)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + ((transitionStart.x + transitionEnd.x) / 2) + ' ' + (transitionStart.y - radius * directionX * Math.abs((endPoint.x - startPoint.x) / 300)) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
         <text fill={isFocused ? "red" : "black"} textAnchor="middle">
           <textPath href={"#" + urlString} startOffset="50%">{
             weight.map(element => {
@@ -188,13 +188,13 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
 
     const transitionStart = new Point(
       startPoint.x + radius * Math.cos(angle) * directionY,
-      startPoint.y + radius*Math.sin(angle) * directionY 
+      startPoint.y + radius * Math.sin(angle) * directionY
     )
 
 
     const transitionEnd = new Point(
       endPoint.x + radius * Math.cos(angle) * directionY,
-      endPoint.y - radius*Math.sin(angle) * directionY 
+      endPoint.y - radius * Math.sin(angle) * directionY
     )
 
     const urlString = transitionStart.x + "," + transitionStart.y + "," + transitionEnd.x + "," + transitionEnd.y
@@ -211,7 +211,7 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
           orient="auto-start-reverse">
           <path stroke="context-stroke" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
-        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionEnd.x + radius * directionY * (Math.abs((endPoint.y-startPoint.y)/(400)) ) ) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
+        <path id={urlString} d={'M ' + transitionStart.x + ' ' + transitionStart.y + ' S ' + (transitionEnd.x + radius * directionY * (Math.abs((endPoint.y - startPoint.y) / (400)))) + ' ' + ((transitionStart.y + transitionEnd.y) / 2) + ' ' + transitionEnd.x + ' ' + transitionEnd.y} stroke={isFocused ? "red" : "#aaa"} strokeWidth={2} fill="transparent" markerEnd={"url(#arrow" + urlString + ")"} />
         <text fill={isFocused ? "red" : "black"} textAnchor="middle">
           <textPath href={"#" + urlString} startOffset="50%">{
             weight.map(element => {
@@ -277,7 +277,7 @@ const Edge = ({ startPoint, endPoint, radius, weight }) => {
  * @param {LbaGraphProps} props
  * @returns {JSX.Element}
  */
-const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = lba.states}) => {
+const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTransitionsFor = lba.states }) => {
   const lbaElements = []
   const alreadyDrawn = new Map()
 
@@ -413,6 +413,7 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTra
   * 
   * @param {String[]} states - The list of states that are drawn.
   * @param {Number} row - The index of the row the states are drawn in.
+  * @return {Boolean} True if at least one state has been drawn in row.
   */
   function drawStates(states, row) {
     if (states.length === 0) {
@@ -421,10 +422,8 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTra
 
     let count = 0
 
-
+    const rowInput = row
     for (let state of states) {
-      const rowInput = row
-
       const statePoint = new Point(
         count * distanceX + marginX,
         row * distanceY + marginY)
@@ -472,23 +471,36 @@ const LbaGraph = ({ lba, radius, distanceY, distanceX, mode = 0, statesToDrawTra
     }
     if (count > 0) {
       height += distanceY
+      return true
+    }
+    else if(count === 0){
+      return false //no state has been drawn
+    }else{
+      throw new Error("how is count lower than 1????")
     }
   }
 
 
   if (lba) {
     if (mode === 0) {
-      //alreadyDrawn.set(lba.LBA.startState, [0, j])
       drawStatesFromState(lba.startState)
     } else if (mode === 1) {
-      drawStates([lba.startState], 0)
+      
+      
+      
       let i = 1
+      if(drawStates([lba.startState], 0)){
+        i++
+      }
 
       for (const state of lba.states) {
-
-        if (lba.delta.get(state)) {
-          i++
-          drawStates(lba.delta.get(state).keys(), i)
+        const childStates = lba.delta.get(state)
+        if (childStates) {
+          if(drawStates(childStates.keys(), i)){
+            i++
+          }
+          
+          
         }
       }
     }
@@ -555,8 +567,7 @@ function App() {
 
       const kurodaGrammar = getKurodaGrammar(inputGrammar)
 
-      console.log(kurodaGrammar)
-      
+      console.log("grammar in kuroda normal", kurodaGrammar.grammar)
       const createdLBA = grammarToLBA(kurodaGrammar.grammar)
       console.log("LBA", createdLBA.LBA)
       if (createdLBA.M) {
@@ -627,7 +638,7 @@ function App() {
           throw new Error("productions has no left or right side. please input productions in the form l->r")
         }
 
-        if(right.includes("|")){
+        if (right.includes("|")) {
           throw new Error("| is not yet supported, please input the productions manually with a , inbetween")
         }
 
@@ -829,7 +840,7 @@ function App() {
           <div className="LBA gui-element">
             <legend>Linear Bounded Automaton</legend>
             {(lbaOutput) && (
-              <LbaGraph lba={lbaOutput.LBA} radius={50} distanceX={300} distanceY={300}></LbaGraph>
+              <LbaGraph lba={lbaOutput.LBA} radius={50} distanceX={300} distanceY={300} mode={0}></LbaGraph>
             )}
           </div>
           <div className="LBA gui-element">
@@ -838,7 +849,6 @@ function App() {
               <LbaGraph lba={eliminateBlank.LBA} radius={50} distanceX={300} distanceY={300} mode={1}></LbaGraph>
             )}
           </div>
-            <LbaGraph lba={lba} distanceY={300} distanceX={300} radius={50}></LbaGraph>
         </div>
       )}
     </div>
