@@ -559,7 +559,7 @@ function App() {
       handleSymbols(nonterminals, terminals)
 
       const start = handleStartValue(startValue, nonterminals)
-      const productions = handleProductions(productionValue.split(' ').join('').split(','))
+      const productions = handleProductions(nonterminals, terminals, productionValue.split(' ').join('').split(','))
 
       const inputGrammar = new Grammar(nonterminals, terminals, productions, start)
       setInputGrammar(inputGrammar)
@@ -620,11 +620,13 @@ function App() {
   }
 
   /**
-     * Checks if productions string is valid, if not th.
+     * Checks if productions string is valid, if not raise error.
+     * @param {String[]} terminals - Array representing a set of terminals
+     * @param {String[]} nonterminals - Array representing a set of nonterminals
      * @param {String} productionsString - A string representing a set of productions.
      * @throws {Error} An Error with a message explaining what is wrong with the productions string
      */
-  function handleProductions(productionsString) {
+  function handleProductions(nonterminals, terminals, productionsString) {
     let productions = []
 
     for (let prod of productionsString) {
@@ -639,15 +641,32 @@ function App() {
         }
 
         if (right.includes("|")) {
-          throw new Error("| is not yet supported, please input the productions manually with a , inbetween")
+            throw new Error("| is not yet supported, please input the productions manually with a , inbetween")
         }
 
         const production = new Production(left.split(''), right.split(''))
 
+        const symbols = terminals.concat(nonterminals)
+
+        for(let element of production.left){
+          if(!(symbols.includes(element))){
+            throw Error("production includes unknown symbol that isnt in terminals or nonterminals")
+          }
+        }
+
+        for(let element of production.right){
+          if(!(symbols.includes(element))){
+            throw Error("production includes unknown symbol that isnt in terminals or nonterminals")
+          }
+        }
+
         productions.push(production)
-      } catch {
-        //return error
-        throw Error("please input grammar productions in the form l->r")
+      }catch(exception){
+        if(exception.message == "Cannot read properties of undefined (reading 'includes')"){
+          throw Error("please input grammar productions in the form l->r")
+        }else{
+          throw Error(exception.message)
+        }
       }
     }
 
