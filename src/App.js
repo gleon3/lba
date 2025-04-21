@@ -648,15 +648,11 @@ function App() {
 
         const symbols = terminals.concat(nonterminals)
 
-        for(let element of production.left){
-          if(!(symbols.includes(element))){
-            throw Error("production includes unknown symbol that isnt in terminals or nonterminals")
-          }
-        }
+        const productionSymbols = production.left.concat(production.right)
 
-        for(let element of production.right){
+        for(let element of productionSymbols){
           if(!(symbols.includes(element))){
-            throw Error("production includes unknown symbol that isnt in terminals or nonterminals")
+            throw Error("production includes unknown symbol " + element + " that isnt in terminals or nonterminals")
           }
         }
 
